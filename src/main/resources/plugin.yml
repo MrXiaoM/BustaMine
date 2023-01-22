@@ -1,0 +1,12 @@
+name: BustaMine
+version: ${project.version}
+main: me.sat7.bustaMine.BustaMine
+depend: [Vault]
+softdepend: [EconomyPlus]
+api-version: 1.13
+authors: [sat7]
+commands:
+  BustaMine:
+    description: "BustaMine"
+    usage: /bm <money | exp | stats | top | go | stop | statistics | reloadConfig | reloadLang>
+    aliases: [bm,busta]
