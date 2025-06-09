@@ -7,6 +7,7 @@ import me.sat7.bustamine.config.Messages;
 import me.sat7.bustamine.config.Sounds;
 import me.sat7.bustamine.manager.GameManager;
 import me.sat7.bustamine.manager.UserManager;
+import me.sat7.bustamine.utils.CustomConfig;
 import me.sat7.bustamine.utils.Util;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;

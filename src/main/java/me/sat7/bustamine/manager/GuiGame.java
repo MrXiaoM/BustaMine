@@ -1,7 +1,7 @@
 package me.sat7.bustamine.manager;
 
 import me.sat7.bustamine.BustaMine;
-import me.sat7.bustamine.CustomConfig;
+import me.sat7.bustamine.utils.CustomConfig;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.BustaGuiHolder;
 import me.sat7.bustamine.manager.gui.IBustaMineGui;
@@ -34,8 +34,6 @@ public class GuiGame implements Listener {
     int betExpSmall, betExpMedium, betExpBig;
     int betMoneySmall, betMoneyMedium, betMoneyBig;
 
-    protected String btnBankroll, btnMyState, btnHistory, btnCashOut, btnCashOutSetting;
-
     public GuiGame(GameManager parent) {
         this.parent = parent;
         this.plugin = parent.plugin();
@@ -50,12 +48,6 @@ public class GuiGame implements Listener {
         betMoneySmall = config.getInt("Bet.Small");
         betMoneyMedium = config.getInt("Bet.Medium");
         betMoneyBig = config.getInt("Bet.Big");
-
-        btnBankroll = config.getString("BtnIcon.Bankroll");
-        btnMyState = config.getString("BtnIcon.MyState");
-        btnHistory = config.getString("BtnIcon.History");
-        btnCashOut = config.getString("BtnIcon.CashOut");
-        btnCashOutSetting = config.getString("BtnIcon.CashOutSetting");
 
         refreshIcons();
     }
@@ -116,7 +108,7 @@ public class GuiGame implements Listener {
 
         // Bankroll
         if (parent.isShowBankroll) {
-            ItemStack bankrollBtn = createItemStack(Material.getMaterial(btnBankroll), null,
+            ItemStack bankrollBtn = createItemStack(parent.btnBankroll, null,
                     UI_Bankroll.get(), null, 1);
             inv.setItem(45, bankrollBtn);
         }
@@ -124,22 +116,22 @@ public class GuiGame implements Listener {
         // 내 정보
         ArrayList<String> myStateLore = new ArrayList<>();
         myStateLore.add(UI_Click.get());
-        ItemStack myStateBtn = createItemStack(Material.getMaterial(btnMyState), null,
+        ItemStack myStateBtn = createItemStack(parent.btnMyState, null,
                 UI_MyState.get(), myStateLore, 1);
         inv.setItem(47, myStateBtn);
 
         // 기록 버튼
-        ItemStack historyBtn = createItemStack(Material.getMaterial(btnHistory), null,
+        ItemStack historyBtn = createItemStack(parent.btnHistory, null,
                 UI_History.get(), null, 1);
         inv.setItem(48, historyBtn);
 
         // 스톱 버튼
-        ItemStack closeBtn = createItemStack(Material.getMaterial(btnCashOut), null,
+        ItemStack closeBtn = createItemStack(parent.btnCashOut, null,
                 UI_CashOut.get(), null, 1);
         inv.setItem(49, closeBtn);
 
         // 설정 버튼
-        ItemStack cosBtn = createItemStack(Material.getMaterial(btnCashOutSetting), null,
+        ItemStack cosBtn = createItemStack(parent.btnCashOutSetting, null,
                 UI_CashOutSetting.get(), null, 1);
         inv.setItem(50, cosBtn);
 

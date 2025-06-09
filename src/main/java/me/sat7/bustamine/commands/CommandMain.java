@@ -1,7 +1,7 @@
 package me.sat7.bustamine.commands;
 
 import me.sat7.bustamine.BustaMine;
-import me.sat7.bustamine.CustomConfig;
+import me.sat7.bustamine.utils.CustomConfig;
 import me.sat7.bustamine.manager.enums.BustaType;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;

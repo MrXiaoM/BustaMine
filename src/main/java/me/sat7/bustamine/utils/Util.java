@@ -27,10 +27,10 @@ public class Util {
         return oddList[index];
     }
 
-    public static int genBustNum(double baseInstabust, int maxMulti) {
+    public static int genBustNum(double baseInstaBust, int maxMulti) {
         double randD = generator.nextDouble();
 
-        if (randD < baseInstabust) return 100;
+        if (randD < baseInstaBust) return 100;
 
         randD = generator.nextDouble();
 
@@ -101,17 +101,28 @@ public class Util {
                 return Material.GLASS_PANE;
         }
     }
+    @SuppressWarnings("deprecation")
+    public static ItemStack createItemStack(Item item, ItemMeta _meta, String name, List<String> lore, int amount) {
+        Material material = item.getMaterial();
+        Integer dataValue = item.getDataValue();
+        if (dataValue != null) {
+            return createItemStack(new ItemStack(material, amount, dataValue.shortValue()), _meta, name, lore);
+        } else {
+            return createItemStack(new ItemStack(material, amount), _meta, name, lore);
+        }
+    }
     public static ItemStack createItemStack(Material material, ItemMeta _meta, String name, List<String> lore, int amount) {
-        ItemStack istack = new ItemStack(material, amount);
-
+        return createItemStack(new ItemStack(material, amount), _meta, name, lore);
+    }
+    public static ItemStack createItemStack(ItemStack baseItem, ItemMeta _meta, String name, List<String> lore) {
         ItemMeta meta = _meta;
-        if (_meta == null) meta = istack.getItemMeta();
+        if (_meta == null) meta = baseItem.getItemMeta();
         if (meta != null) {
             if (!name.isEmpty()) meta.setDisplayName(name);
             meta.setLore(lore);
-            istack.setItemMeta(meta);
+            baseItem.setItemMeta(meta);
         }
-        return istack;
+        return baseItem;
     }
 
     public static int calcTotalExp(Player p) {
@@ -147,6 +158,24 @@ public class Util {
     @SuppressWarnings("UnstableApiUsage")
     public static void updateInventory(Player player) {
         player.updateInventory();
+    }
+
+    public static Optional<Integer> parseInt(String str) {
+        if (str == null || str.isEmpty()) return Optional.empty();
+        try {
+            return Optional.of(Integer.parseInt(str));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
+
+    public static Material getMaterial(String str, Material def) {
+        String upper = str.toUpperCase();
+        Material material = Material.getMaterial(upper);
+        if (material != null) {
+            return material;
+        }
+        return def;
     }
 
     private static final String FLAG = "BustaMine_Icon";

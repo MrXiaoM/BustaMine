@@ -1,5 +1,7 @@
-package me.sat7.bustamine;
+package me.sat7.bustamine.utils;
 
+import me.sat7.bustamine.BustaMine;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -43,6 +45,21 @@ public class CustomConfig {
 
     public String getString(String key, String def) {
         return customFile.getString(key, def);
+    }
+
+    public Item getItem(String key) {
+        String str;
+        Integer dataValue;
+        if (key.contains(":")) {
+            String[] split = key.split(":", 2);
+            str = split[0];
+            dataValue = Util.parseInt(split[1]).orElse(null);
+        } else {
+            str = key;
+            dataValue = null;
+        }
+        Material material = Util.getMaterial(getString(str), Material.PAPER);
+        return new Item(material, dataValue);
     }
 
     public int getInt(String key) {

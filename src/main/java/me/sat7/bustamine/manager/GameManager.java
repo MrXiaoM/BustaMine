@@ -1,10 +1,11 @@
 package me.sat7.bustamine.manager;
 
 import me.sat7.bustamine.BustaMine;
-import me.sat7.bustamine.CustomConfig;
+import me.sat7.bustamine.utils.CustomConfig;
 import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaState;
 import me.sat7.bustamine.manager.enums.BustaType;
+import me.sat7.bustamine.utils.Item;
 import me.sat7.bustamine.utils.Util;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -49,7 +50,10 @@ public class GameManager {
     private final GuiBetSettings guiBetSettings;
 
     private String commandRoundStart, commandPlayerBet, commandPlayerCashOut, commandRoundEnd;
-    private String btnWinChance;
+
+    protected Item btnBankroll, btnMyState, btnHistory, btnCashOut, btnCashOutSetting, btnWinChance;
+    protected Item btnBetSmall, btnBetMedium, btnBetBig;
+
     private int roundInterval;
     private int betSmall, betMedium, betBig, betMax;
     private int betExpSmall, betExpMedium, betExpBig, betExpMax;
@@ -91,7 +95,17 @@ public class GameManager {
         forceUpdateUI = config.getBoolean("UIForceUpdate", false);
         isShowWinChance = config.getBoolean("ShowWinChance");
         isShowBankroll = config.getBoolean("ShowBankroll");
-        btnWinChance = config.getString("BtnIcon.WinChance");
+
+        btnBankroll = config.getItem("BtnIcon.Bankroll");
+        btnMyState = config.getItem("BtnIcon.MyState");
+        btnHistory = config.getItem("BtnIcon.History");
+        btnCashOut = config.getItem("BtnIcon.CashOut");
+        btnCashOutSetting = config.getItem("BtnIcon.CashOutSetting");
+        btnWinChance = config.getItem("BtnIcon.WinChance");
+        btnBetSmall = config.getItem("BtnIcon.BetSmall");
+        btnBetMedium = config.getItem("BtnIcon.BetMedium");
+        btnBetBig = config.getItem("BtnIcon.BetBig");
+
         roundInterval = config.getInt("RoundInterval");
 
         betSmall = config.getInt("Bet.Small");
@@ -203,7 +217,7 @@ public class GameManager {
         betTimeLeft = roundInterval + 1;
 
         if (isShowWinChance) {
-            ItemStack winChance = createItemStack(Material.getMaterial(btnWinChance), null,
+            ItemStack winChance = createItemStack(btnWinChance, null,
                     UI_WinChance.get(), null, 1);
 
             double bustChance = odd(maxMulti - 1);
@@ -227,7 +241,7 @@ public class GameManager {
 
         if (isShowBankroll) {
             if (gui().getMoneyIcon(45) == null) {
-                ItemStack bankrollBtn = createItemStack(Material.getMaterial(gui().btnBankroll), null,
+                ItemStack bankrollBtn = createItemStack(btnBankroll, null,
                         UI_Bankroll.get(), null, 1);
                 gui().setBothIcon(45, bankrollBtn);
             }
@@ -238,26 +252,26 @@ public class GameManager {
         }
 
         {
-            ItemStack bet10Btn = createItemStack(Material.getMaterial(betSettings().btnBetSmall), null,
+            ItemStack bet10Btn = createItemStack(btnBetSmall, null,
                     UI_BetBtn.get() + " §e" + currencySymbol + betSmall, null, 1);
             gui().setMoneyIcon(51, bet10Btn);
-            ItemStack betE1Btn = createItemStack(Material.getMaterial(betSettings().btnBetSmall), null,
+            ItemStack betE1Btn = createItemStack(btnBetSmall, null,
                     UI_BetBtn.get() + " §eXp" + betExpSmall, null, 1);
             gui().setExpIcon(51, betE1Btn);
 
             // 100
-            ItemStack bet100Btn = createItemStack(Material.getMaterial(betSettings().btnBetMedium), null,
+            ItemStack bet100Btn = createItemStack(btnBetMedium, null,
                     UI_BetBtn.get() + " §e" + currencySymbol + betMedium, null, 1);
             gui().setMoneyIcon(52, bet100Btn);
-            ItemStack betE2Btn = createItemStack(Material.getMaterial(betSettings().btnBetMedium), null,
+            ItemStack betE2Btn = createItemStack(btnBetMedium, null,
                     UI_BetBtn.get() + " §eXp" + betExpMedium, null, 1);
             gui().setExpIcon(52, betE2Btn);
 
             // 1000
-            ItemStack bet1000Btn = createItemStack(Material.getMaterial(betSettings().btnBetBig), null,
+            ItemStack bet1000Btn = createItemStack(btnBetBig, null,
                     UI_BetBtn.get() + " §e" + currencySymbol + betBig, null, 1);
             gui().setMoneyIcon(53, bet1000Btn);
-            ItemStack betE3Btn = createItemStack(Material.getMaterial(betSettings().btnBetBig), null,
+            ItemStack betE3Btn = createItemStack(btnBetBig, null,
                     UI_BetBtn.get() + " §eXp" + betExpBig, null, 1);
             gui().setExpIcon(53, betE3Btn);
         }
