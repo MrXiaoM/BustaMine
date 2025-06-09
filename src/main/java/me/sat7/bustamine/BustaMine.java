@@ -146,7 +146,7 @@ public final class BustaMine extends JavaPlugin {
 
         log("Enabled! :)");
 
-        gameManager.gui().gameGUISetup();
+        gameManager.guiGameShared().gameGUISetup();
 
         gameManager.startGame();
         gameManager.setGameEnable(true);

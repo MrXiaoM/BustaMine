@@ -43,23 +43,23 @@ public class GameManager {
     final Map<UUID, BustaType> playerMap = new HashMap<>();
     final Map<UUID, Integer> activePlayerMap = new ConcurrentHashMap<>();
     final Map<UUID, Integer> headPos = new HashMap<>();
-    
-    private final GuiGame guiGame;
+
+    private final GuiGameShared guiGameShared;
     private final GuiBetSettings guiBetSettings;
     private final Config config;
 
     public GameManager(BustaMine plugin) {
         this.plugin = plugin;
         this.config = plugin.config();
-        this.guiGame = new GuiGame(this);
+        this.guiGameShared = new GuiGameShared(this);
         this.guiBetSettings = new GuiBetSettings(this);
     }
 
-    public GuiGame gui() {
-        return guiGame;
+    public GuiGameShared guiGameShared() {
+        return guiGameShared;
     }
 
-    public GuiBetSettings betSettings() {
+    public GuiBetSettings guiBetSettings() {
         return guiBetSettings;
     }
 
@@ -70,8 +70,8 @@ public class GameManager {
     public void reload() {
         maxMulti = config.multiplierMax.val();
         baseInstaBust = Math.max(0, config.probabilityOfInstaBust.val() / 100 - odd(maxMulti - 1));
-        gui().reload();
-        betSettings().reload();
+        guiGameShared().reload();
+        guiBetSettings().reload();
     }
 
     public void setGameEnable(boolean gameEnable) {
@@ -158,7 +158,7 @@ public class GameManager {
         headPos.clear();
         // 将 1-5 行填满玻璃板
         for (int i = 0; i < 45; i++) {
-            gui().setBothIcon(i, getGlassItem(9));
+            guiGameShared().setBothIcon(i, getGlassItem(9));
         }
 
         bState = BustaState.BET;
@@ -184,61 +184,61 @@ public class GameManager {
                 winChance.setItemMeta(meta);
             }
             flag(winChance, "win chance");
-            gui().setBothIcon(46, winChance);
+            guiGameShared().setBothIcon(46, winChance);
         } else {
-            gui().setBothIcon(46, null);
+            guiGameShared().setBothIcon(46, null);
         }
 
         if (config.isShowBankroll.val()) {
-            if (gui().getMoneyIcon(45) == null) {
+            if (guiGameShared().getMoneyIcon(45) == null) {
                 ItemStack bankrollBtn = createItemStack(config.btnBankroll, null,
                         UI_Bankroll.get(), null, 1);
                 flag(bankrollBtn, "bankroll");
-                gui().setBothIcon(45, bankrollBtn);
+                guiGameShared().setBothIcon(45, bankrollBtn);
             }
             updateBankroll(BustaType.MONEY, 0);
             updateBankroll(BustaType.EXP, 0);
         } else {
-            gui().setBothIcon(45, null);
+            guiGameShared().setBothIcon(45, null);
         }
 
         {
             ItemStack bet10Btn = createItemStack(config.btnBetSmall, null,
                     UI_BetBtn.get() + " §e" + config.currencySymbol + config.betSmall, null, 1);
             flag(bet10Btn, "bet:small");
-            gui().setMoneyIcon(51, bet10Btn);
+            guiGameShared().setMoneyIcon(51, bet10Btn);
             ItemStack betE1Btn = createItemStack(config.btnBetSmall, null,
                     UI_BetBtn.get() + " §eXp" + config.betExpSmall, null, 1);
             flag(betE1Btn, "bet:small");
-            gui().setExpIcon(51, betE1Btn);
+            guiGameShared().setExpIcon(51, betE1Btn);
 
             // 100
             ItemStack bet100Btn = createItemStack(config.btnBetMedium, null,
                     UI_BetBtn.get() + " §e" + config.currencySymbol + config.betMedium, null, 1);
             flag(bet100Btn, "bet:medium");
-            gui().setMoneyIcon(52, bet100Btn);
+            guiGameShared().setMoneyIcon(52, bet100Btn);
             ItemStack betE2Btn = createItemStack(config.btnBetMedium, null,
                     UI_BetBtn.get() + " §eXp" + config.betExpMedium, null, 1);
             flag(betE2Btn, "bet:medium");
-            gui().setExpIcon(52, betE2Btn);
+            guiGameShared().setExpIcon(52, betE2Btn);
 
             // 1000
             ItemStack bet1000Btn = createItemStack(config.btnBetBig, null,
                     UI_BetBtn.get() + " §e" + config.currencySymbol + config.betBig, null, 1);
             flag(bet100Btn, "bet:big");
-            gui().setMoneyIcon(53, bet1000Btn);
+            guiGameShared().setMoneyIcon(53, bet1000Btn);
             ItemStack betE3Btn = createItemStack(config.btnBetBig, null,
                     UI_BetBtn.get() + " §eXp" + config.betExpBig, null, 1);
             flag(betE3Btn, "bet:big");
-            gui().setExpIcon(53, betE3Btn);
+            guiGameShared().setExpIcon(53, betE3Btn);
         }
 
-        ItemMeta im = gui().getMoneyIcon(49).getItemMeta();
+        ItemMeta im = guiGameShared().getMoneyIcon(49).getItemMeta();
         if (im != null) {
             ArrayList<String> betLore = new ArrayList<>();
             betLore.add("§b§l" + "Bet >>>");
             im.setLore(betLore);
-            gui().updateBothIcon(49, im);
+            guiGameShared().updateBothIcon(49, im);
         }
 
         bustaTask = Bukkit.getScheduler().runTaskTimer(plugin, () ->
@@ -247,27 +247,27 @@ public class GameManager {
                 bustaTask.cancel();
 
                 for (Integer key : old.keySet()) {
-                    gui().setBothIcon(key, old.get(key));
+                    guiGameShared().setBothIcon(key, old.get(key));
                 }
 
                 runGame();
 
                 for (int i = 0; i < 45; i++) {
                     if (headPos.containsValue(i)) continue;
-                    gui().setBothIcon(i, getGlassItem(13));
+                    guiGameShared().setBothIcon(i, getGlassItem(13));
                 }
 
                 for (int i = 51; i <= 53; i++) {
-                    gui().setBothIcon(i, getGlassItem(13));
+                    guiGameShared().setBothIcon(i, getGlassItem(13));
                 }
             } else {
                 ArrayList<String> nextRoundLore = new ArrayList<>();
                 nextRoundLore.add("§b§l" + "Next round in " + betTimeLeft + "s");
 
-                if (betTimeLeft <= 5) gui().drawNumber(betTimeLeft);
+                if (betTimeLeft <= 5) guiGameShared().drawNumber(betTimeLeft);
 
                 for (int i = 51; i <= 53; i++) {
-                    gui().updateBothIcon(i, nextRoundLore);
+                    guiGameShared().updateBothIcon(i, nextRoundLore);
                 }
             }
         }, 0, 20);
@@ -301,7 +301,7 @@ public class GameManager {
             ArrayList<String> newLore = new ArrayList<>();
             newLore.add("§a§lx" + doubleFormat.format(curNum / 100.0));
 
-            gui().updateBothIcon(49, newLore);
+            guiGameShared().updateBothIcon(49, newLore);
 
             if (config.isForceUpdateUI.val()) {
                 for (UUID uuid : playerMap.keySet()) {
@@ -355,16 +355,16 @@ public class GameManager {
         ArrayList<String> newLore = new ArrayList<>();
         newLore.add("§c§lx" + doubleFormat.format(curNum / 100.0));
 
-        gui().updateBothIcon(49, newLore);
+        guiGameShared().updateBothIcon(49, newLore);
 
         for (int i = 0; i < 45; i++) {
             if (!headPos.containsValue(i)) {
-                gui().setBothIcon(i, getGlassItem(14));
+                guiGameShared().setBothIcon(i, getGlassItem(14));
             }
         }
 
         for (int i = 51; i <= 53; i++) {
-            gui().setBothIcon(i, getGlassItem(14));
+            guiGameShared().setBothIcon(i, getGlassItem(14));
         }
 
         history.add(curNum);
@@ -379,7 +379,7 @@ public class GameManager {
             }
         }
 
-        gui().updateBothIcon(48, historyLore);
+        guiGameShared().updateBothIcon(48, historyLore);
 
         plugin.bank().save();
         plugin.users().save();
@@ -504,7 +504,7 @@ public class GameManager {
                     skull.setItemMeta(meta);
                 }
                 flag(skull, "show player info:" + p.getName());
-                gui().setBothIcon(playerMap.size() - 1, skull);
+                guiGameShared().setBothIcon(playerMap.size() - 1, skull);
 
                 headPos.put(p.getUniqueId(), playerMap.size() - 1);
             }
@@ -512,7 +512,7 @@ public class GameManager {
             try {
                 if (headPos.containsKey(p.getUniqueId())) {
                     int idx = headPos.get(p.getUniqueId());
-                    ItemStack item = gui().getMoneyIcon(idx);
+                    ItemStack item = guiGameShared().getMoneyIcon(idx);
                     ItemMeta meta = item.getItemMeta();
                     if (meta != null) {
                         ArrayList<String> lore = new ArrayList<>();
@@ -525,7 +525,7 @@ public class GameManager {
                         item.setItemMeta(meta);
                     }
                     flag(item, "show player info:" + p.getName());
-                    gui().setBothIcon(idx, item);
+                    guiGameShared().setBothIcon(idx, item);
                 }
             } catch (Exception e) {
                 log("Failed to update UI. Game/Bet/!firstBet", e);
@@ -534,7 +534,7 @@ public class GameManager {
     }
 
     private void loadAndSetSkin(Player p, int idx) {
-        ItemStack item = gui().getMoneyIcon(idx);
+        ItemStack item = guiGameShared().getMoneyIcon(idx);
         ItemMeta meta = item.getItemMeta();
         if (meta instanceof SkullMeta) {
             try {
@@ -546,7 +546,7 @@ public class GameManager {
 
         item.setItemMeta(meta);
         flag(item, "show player info:" + p.getName());
-        gui().setBothIcon(idx, item);
+        guiGameShared().setBothIcon(idx, item);
     }
 
     public void cashOut(Player p) {
@@ -576,7 +576,7 @@ public class GameManager {
 
         if (headPos.containsKey(p.getUniqueId())) {
             ItemStack out = new ItemStack(getGlass(11));
-            ItemStack head = gui().getMoneyIcon(headPos.get(p.getUniqueId()));
+            ItemStack head = guiGameShared().getMoneyIcon(headPos.get(p.getUniqueId()));
             ItemMeta headMeta = head.getItemMeta();
             List<String> oldLore = headMeta != null ? headMeta.getLore() : null;
 
@@ -592,7 +592,7 @@ public class GameManager {
             }
 
             flag(out, "show player info:" + p.getName());
-            gui().setBothIcon(headPos.get(p.getUniqueId()), out);
+            guiGameShared().setBothIcon(headPos.get(p.getUniqueId()), out);
             headPos.remove(p.getUniqueId());
         }
 
@@ -625,7 +625,7 @@ public class GameManager {
             lore.add("§e" + config.currencySymbol + String.format("%.1f", bankMoney / 1000.0) + "K");
             lore.add("§eXp" + String.format("%.1f", bankExp / 1000.0) + "K");
 
-            gui().updateBothIcon(45, lore);
+            guiGameShared().updateBothIcon(45, lore);
         }
 
         if (amount.doubleValue() > 0) {

@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -176,10 +177,15 @@ public class Util {
     }
 
     private static final String FLAG = "BustaMine_Icon";
-    public static String flag(ItemStack item) {
-        return NBT.get(item, nbt -> nbt.hasTag(FLAG) ? nbt.getString(FLAG) : "");
+    @NotNull
+    public static String flag(@NotNull ItemStack item) {
+        try {
+            return NBT.get(item, nbt -> nbt.hasTag(FLAG) ? nbt.getString(FLAG) : "");
+        } catch (Throwable ignored) {
+            return "";
+        }
     }
-    public static void flag(ItemStack item, String flag) {
+    public static void flag(@NotNull ItemStack item, @NotNull String flag) {
         NBT.modify(item, nbt -> {
             nbt.setString(FLAG, flag);
         });

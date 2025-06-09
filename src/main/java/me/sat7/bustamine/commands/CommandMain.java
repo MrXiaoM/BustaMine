@@ -33,9 +33,9 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
         if (args.length == 0) {
             if (player.hasPermission("bm.user.money")) {
-                plugin.game().gui().openGameGUI(player, BustaType.MONEY);
+                plugin.game().guiGameShared().openGameGUI(player, BustaType.MONEY);
             } else if (player.hasPermission("bm.user.exp")) {
-                plugin.game().gui().openGameGUI(player, BustaType.EXP);
+                plugin.game().guiGameShared().openGameGUI(player, BustaType.EXP);
             } else {
                 return Message_NoPermission.t(player);
             }
@@ -64,14 +64,14 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         return Message_NoPermission.t(player);
                     }
 
-                    plugin.game().gui().openGameGUI(player, BustaType.MONEY);
+                    plugin.game().guiGameShared().openGameGUI(player, BustaType.MONEY);
                     break;
                 case "exp":
                     if (!player.hasPermission("bm.user.exp")) {
                         return Message_NoPermission.t(player);
                     }
 
-                    plugin.game().gui().openGameGUI(player, BustaType.EXP);
+                    plugin.game().guiGameShared().openGameGUI(player, BustaType.EXP);
                     break;
                 case "stats":
                     if (!player.hasPermission("bm.user.stats")) {
@@ -121,7 +121,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     plugin.reloadMessages();
                     plugin.updateConfig();
 
-                    plugin.game().gui().gameGUISetup();
+                    plugin.game().guiGameShared().gameGUISetup();
                     plugin.game().startGame();
                     plugin.game().setGameEnable(true);
 

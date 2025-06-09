@@ -24,7 +24,15 @@ import java.util.List;
 import static me.sat7.bustamine.config.Messages.*;
 import static me.sat7.bustamine.utils.Util.*;
 
-public class GuiGame implements Listener {
+/**
+ * 共享游戏菜单，打开方式如下
+ * <ul>
+ *     <li><code>/bm</code> 打开金币或经验股市</li>
+ *     <li><code>/bm exp</code> 打开经验股市</li>
+ *     <li><code>/bm money</code> 打开金币股市</li>
+ * </ul>
+ */
+public class GuiGameShared implements Listener {
     private final BustaMine plugin;
     private final GameManager parent;
     private final Config config;
@@ -36,7 +44,7 @@ public class GuiGame implements Listener {
     int betMoneySmall, betMoneyMedium, betMoneyBig;
 
 
-    public GuiGame(GameManager parent) {
+    public GuiGameShared(GameManager parent) {
         this.parent = parent;
         this.plugin = parent.plugin();
         this.config = parent.plugin().config();
@@ -228,7 +236,7 @@ public class GuiGame implements Listener {
                 return;
             }
             if (flag.equals("show bet setting")) { // 50
-                parent.betSettings().showBetSettingUI(player);
+                parent.guiBetSettings().showBetSettingUI(player);
                 return;
             }
             if (flag.equals("cash out")) { // 49

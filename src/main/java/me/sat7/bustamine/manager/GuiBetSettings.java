@@ -129,13 +129,13 @@ public class GuiBetSettings implements Listener {
 
             if (e.getSlot() == 18) {
                 if (player.hasPermission("bm.user.money")) {
-                    parent.gui().openGameGUI(player, BustaType.MONEY);
+                    parent.guiGameShared().openGameGUI(player, BustaType.MONEY);
                 } else {
                     Message_NoPermission.t(player);
                 }
             } else if (e.getSlot() == 26) {
                 if (player.hasPermission("bm.user.exp")) {
-                    parent.gui().openGameGUI(player, BustaType.EXP);
+                    parent.guiGameShared().openGameGUI(player, BustaType.EXP);
                 } else {
                     Message_NoPermission.t(player);
                 }
