@@ -41,7 +41,7 @@ public class GameManager {
     protected final List<Integer> history = new ArrayList<>();
     protected final Map<Integer, ItemStack> old = new HashMap<>();
 
-    final Map<String, String> playerMap = new HashMap<>();
+    final Map<String, BustaType> playerMap = new HashMap<>();
     final Map<String, Integer> activePlayerMap = new ConcurrentHashMap<>();
     final Map<String, Integer> headPos = new HashMap<>();
     
@@ -174,18 +174,20 @@ public class GameManager {
             ItemStack winChance = createItemStack(Material.getMaterial(plugin.ccConfig.get().getString("BtnIcon.WinChance")), null,
                     UI_WinChance.get(), null, 1);
 
-            double bustchance = odd(plugin.ccConfig.get().getInt("MultiplierMax") - 1);
+            double bustChance = odd(maxMulti - 1);
             ArrayList<String> winChanceArr = new ArrayList<>();
-            winChanceArr.add("§ex2: " + doubleFormat.format((odd(1) - bustchance) * 100 * (1 - baseInstaBust)) + "%");
-            winChanceArr.add("§ex3: " + doubleFormat.format((odd(2) - bustchance) * 100 * (1 - baseInstaBust)) + "%");
-            winChanceArr.add("§ex7: " + doubleFormat.format((odd(6) - bustchance) * 100 * (1 - baseInstaBust)) + "%");
-            winChanceArr.add("§ex12: " + doubleFormat.format((odd(11) - bustchance) * 100 * (1 - baseInstaBust)) + "%");
-            winChanceArr.add("§eInstaBust: " + doubleFormat.format((bustchance + baseInstaBust) * 100) + "%");
-            winChanceArr.add("§e" + MaximumMultiplier.get() + ": x" + plugin.ccConfig.get().getInt("MultiplierMax"));
+            winChanceArr.add("§ex2: " + doubleFormat.format((odd(1) - bustChance) * 100 * (1 - baseInstaBust)) + "%");
+            winChanceArr.add("§ex3: " + doubleFormat.format((odd(2) - bustChance) * 100 * (1 - baseInstaBust)) + "%");
+            winChanceArr.add("§ex7: " + doubleFormat.format((odd(6) - bustChance) * 100 * (1 - baseInstaBust)) + "%");
+            winChanceArr.add("§ex12: " + doubleFormat.format((odd(11) - bustChance) * 100 * (1 - baseInstaBust)) + "%");
+            winChanceArr.add("§eInstaBust: " + doubleFormat.format((bustChance + baseInstaBust) * 100) + "%");
+            winChanceArr.add("§e" + MaximumMultiplier.get() + ": x" + maxMulti);
 
-            ItemMeta tempMeta = winChance.getItemMeta();
-            tempMeta.setLore(winChanceArr);
-            winChance.setItemMeta(tempMeta);
+            ItemMeta meta = winChance.getItemMeta();
+            if (meta != null) {
+                meta.setLore(winChanceArr);
+                winChance.setItemMeta(meta);
+            }
             gui().setBothIcon(46, winChance);
         } else {
             gui().setBothIcon(46, null);
@@ -476,7 +478,7 @@ public class GameManager {
         updateNetProfit(p, BustaType.valueOf(type.toString()), -amount);
 
         if (firstBet) {
-            playerMap.put(p.getUniqueId().toString(), type.toString());
+            playerMap.put(p.getUniqueId().toString(), type);
 
             User user = plugin.users().get(p);
             user.setGamesPlayed(user.getGamesPlayed() + 1);
@@ -557,7 +559,7 @@ public class GameManager {
 
         Message_DivUpper.t(p);
         p.sendMessage("   §f" + CashedOut.get() + ": x" + doubleFormat.format(curNum / 100.0));
-        if (BustaType.valueOf(playerMap.get(p.getUniqueId().toString())) == BustaType.MONEY) {
+        if (playerMap.get(p.getUniqueId().toString()) == BustaType.MONEY) {
             p.sendMessage("   §3" + Profit.get() + ": " + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(prize - bet));
             plugin.getEconomy().depositPlayer(p, prize);
             p.sendMessage("   §e" + MyBal.get() + ": " + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(plugin.getEconomy().getBalance(p)));
@@ -573,8 +575,11 @@ public class GameManager {
         if (headPos.containsKey(p.getUniqueId().toString())) {
             ItemStack out = new ItemStack(getGlass(11));
             ItemStack head = gui().getMoneyIcon(headPos.get(p.getUniqueId().toString()));
+            ItemMeta headMeta = head.getItemMeta();
+            List<String> oldLore = headMeta != null ? headMeta.getLore() : null;
 
-            ArrayList<String> lore = new ArrayList<>(head.getItemMeta().getLore());
+            List<String> lore = new ArrayList<>();
+            if (oldLore != null) lore.addAll(oldLore);
             lore.add("§f" + CashedOut.get() + ": x" + doubleFormat.format(curNum / 100.0));
 
             ItemMeta meta = out.getItemMeta();
@@ -597,8 +602,8 @@ public class GameManager {
             }
         }
 
-        updateBankroll(BustaType.valueOf(playerMap.get(p.getUniqueId().toString())), -prize);
-        updateNetProfit(p, BustaType.valueOf(playerMap.get(p.getUniqueId().toString())), prize);
+        updateBankroll(playerMap.get(p.getUniqueId().toString()), -prize);
+        updateNetProfit(p, playerMap.get(p.getUniqueId().toString()), prize);
     }
 
     private void updateBankroll(BustaType type, double amount) {
