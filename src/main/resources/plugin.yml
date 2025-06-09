@@ -1,6 +1,6 @@
 name: BustaMine
 version: ${version}
-main: me.sat7.bustaMine.BustaMine
+main: me.sat7.bustamine.BustaMine
 depend:
   - Vault
 softdepend:

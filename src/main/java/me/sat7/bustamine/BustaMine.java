@@ -1,8 +1,8 @@
-package me.sat7.bustaMine;
+package me.sat7.bustamine;
 
-import me.sat7.bustaMine.Commands.CommandMain;
-import me.sat7.bustaMine.Events.OnClick;
-import me.sat7.bustaMine.Events.OnJoinLeave;
+import me.sat7.bustamine.commands.CommandMain;
+import me.sat7.bustamine.listeners.OnClick;
+import me.sat7.bustamine.listeners.OnJoinLeave;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
@@ -89,7 +89,7 @@ public final class BustaMine extends JavaPlugin implements Listener {
 
         new CommandMain(this);
 
-        Game.CalcOdds();
+        Game.calcOdds();
         setupConfig();
         setupBank();
         setupUser();
@@ -99,12 +99,12 @@ public final class BustaMine extends JavaPlugin implements Listener {
 
         console.sendMessage(consolePrefix + "Enabled! :)");
 
-        Game.SetupGlass();
-        Game.SetupSortedMap();
-        Game.GameUISetup();
+        Game.setupGlass();
+        Game.setupSortedMap();
+        Game.gameGUISetup();
 
         // 첫 게임 시작
-        Game.StartGame();
+        Game.startGame();
         Game.gameEnable = true;
     }
 

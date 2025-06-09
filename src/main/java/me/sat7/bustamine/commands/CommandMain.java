@@ -1,14 +1,15 @@
-package me.sat7.bustaMine.Commands;
+package me.sat7.bustamine.commands;
 
-import me.sat7.bustaMine.BustaMine;
-import me.sat7.bustaMine.CustomConfig;
-import me.sat7.bustaMine.Game;
+import me.sat7.bustamine.BustaMine;
+import me.sat7.bustamine.CustomConfig;
+import me.sat7.bustamine.Game;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CommandMain implements CommandExecutor, TabCompleter {
     private BustaMine plugin;
@@ -33,9 +34,9 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
         if (args.length == 0) {
             if (player.hasPermission("bm.user.money")) {
-                Game.OpenGameInven(player, Game.bustaType.money);
+                Game.openGameGUI(player, Game.bustaType.money);
             } else if (player.hasPermission("bm.user.exp")) {
-                Game.OpenGameInven(player, Game.bustaType.exp);
+                Game.openGameGUI(player, Game.bustaType.exp);
             } else {
                 player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                 return true;
@@ -66,7 +67,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         return true;
                     }
 
-                    Game.OpenGameInven(player, Game.bustaType.money);
+                    Game.openGameGUI(player, Game.bustaType.money);
                     break;
                 case "exp":
                     if (!player.hasPermission("bm.user.exp")) {
@@ -74,7 +75,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         return true;
                     }
 
-                    Game.OpenGameInven(player, Game.bustaType.exp);
+                    Game.openGameGUI(player, Game.bustaType.exp);
                     break;
                 case "stats":
                     if (!player.hasPermission("bm.user.stats")) {
@@ -85,12 +86,12 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     if (args.length > 1) {
                         Player p = Bukkit.getPlayer(args[1]);
                         if (p != null) {
-                            Game.ShowPlayerInfo(player, p);
+                            Game.showPlayerInfo(player, p);
                         } else {
                             player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.PlayerNotExist"));
                         }
                     } else {
-                        Game.ShowPlayerInfo(player, player);
+                        Game.showPlayerInfo(player, player);
                     }
                     break;
                 case "top":
@@ -101,12 +102,12 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
                     if (args.length >= 2) {
                         if (args[1].equals("NetProfit") || args[1].equals("NetProfit_Exp") || args[1].equals("GamesPlayed")) {
-                            Game.Top(player, args[1]);
+                            Game.top(player, args[1]);
                         } else {
                             player.sendMessage(BustaMine.prefix + "[NetProfit | NetProfit_Exp | GamesPlayed]");
                         }
                     } else {
-                        Game.Top(player, "NetProfit");
+                        Game.top(player, "NetProfit");
                     }
                     break;
                 case "reloadConfig":
@@ -120,7 +121,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     BustaMine.ccUser.reload();
                     BustaMine.ccSound.reload();
                     BustaMine.updateConfig();
-                    Game.RefreshIcons();
+                    Game.refreshIcons();
 
                     player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.Reload_FromNextRound"));
                     break;
@@ -133,8 +134,8 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     BustaMine.ccLang.reload();
                     BustaMine.updateConfig();
 
-                    Game.GameUISetup();
-                    Game.StartGame();
+                    Game.gameGUISetup();
+                    Game.startGame();
                     Game.gameEnable = true;
 
                     player.sendMessage(BustaMine.prefix + "Game was terminated by server");
@@ -146,7 +147,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         return true;
                     }
 
-                    Game.StartGame();
+                    Game.startGame();
                     Game.gameEnable = true;
                     player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.Start"));
                     break;
@@ -171,7 +172,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
                     ArrayList<Integer> tempList = new ArrayList<>();
                     for (int i = 0; i < 100000; i++) {
-                        tempList.add(Game.GenBustNum());
+                        tempList.add(Game.genBustNum());
                     }
 
                     debugResult.get().set("result", tempList);
@@ -185,7 +186,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         return true;
                     }
 
-                    Game.ShowStatistics(player);
+                    Game.showStatistics(player);
                     break;
             }
         }

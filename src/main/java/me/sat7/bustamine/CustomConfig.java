@@ -1,4 +1,4 @@
-package me.sat7.bustaMine;
+package me.sat7.bustamine;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -11,37 +11,36 @@ public class CustomConfig {
     private FileConfiguration customFile; // 버킷의 데이터 타입
 
     //Finds or generates the custom config file
-    public void setup(String name){
+    public void setup(String name) {
         file = new File(BustaMine.plugin.getDataFolder(), name + ".yml");
 
-        if (!file.exists()){
-            try{
+        if (!file.exists()) {
+            try {
                 file.createNewFile();
-            }catch (IOException e){
+            } catch (IOException e) {
                 //System.out.println("CreateFileFail");
             }
         }
         customFile = YamlConfiguration.loadConfiguration(file);
     }
 
-    public FileConfiguration get(){
+    public FileConfiguration get() {
         return customFile;
     }
 
-    public void save(){
-        try{
+    public void save() {
+        try {
             customFile.save(file);
-        }catch (IOException e){
+        } catch (IOException e) {
             System.out.println("Couldn't save file");
         }
     }
 
-    public void reload(){
+    public void reload() {
         customFile = YamlConfiguration.loadConfiguration(file);
     }
 
-    public void delete()
-    {
+    public void delete() {
         file.delete();
     }
 }
