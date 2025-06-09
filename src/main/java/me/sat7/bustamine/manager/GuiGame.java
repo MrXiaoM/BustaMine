@@ -1,10 +1,11 @@
 package me.sat7.bustamine.manager;
 
 import me.sat7.bustamine.BustaMine;
-import me.sat7.bustamine.utils.CustomConfig;
+import me.sat7.bustamine.config.Config;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.BustaGuiHolder;
 import me.sat7.bustamine.manager.gui.IBustaMineGui;
+import me.sat7.bustamine.utils.Item;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -27,6 +28,7 @@ import static me.sat7.bustamine.utils.Util.*;
 public class GuiGame implements Listener {
     private final BustaMine plugin;
     private final GameManager parent;
+    private final Config config;
 
     private Inventory gameInventory;
     private Inventory gameInventory_exp;
@@ -34,20 +36,21 @@ public class GuiGame implements Listener {
     int betExpSmall, betExpMedium, betExpBig;
     int betMoneySmall, betMoneyMedium, betMoneyBig;
 
+
     public GuiGame(GameManager parent) {
         this.parent = parent;
         this.plugin = parent.plugin();
+        this.config = parent.plugin().config();
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     public void reload() {
-        CustomConfig config = plugin.config();
-        betExpSmall = config.getInt("Bet.ExpSmall");
-        betExpMedium = config.getInt("Bet.ExpMedium");
-        betExpBig = config.getInt("Bet.ExpBig");
-        betMoneySmall = config.getInt("Bet.Small");
-        betMoneyMedium = config.getInt("Bet.Medium");
-        betMoneyBig = config.getInt("Bet.Big");
+        betExpSmall = config.betExpSmall.val();
+        betExpMedium = config.betExpMedium.val();
+        betExpBig = config.betExpBig.val();
+        betMoneySmall = config.betSmall.val();
+        betMoneyMedium = config.betMedium.val();
+        betMoneyBig = config.betBig.val();
 
         refreshIcons();
     }
@@ -107,8 +110,8 @@ public class GuiGame implements Listener {
         Inventory inv = new BustaGuiHolder(type, 54, title).getInventory();
 
         // Bankroll
-        if (parent.isShowBankroll) {
-            ItemStack bankrollBtn = createItemStack(parent.btnBankroll, null,
+        if (config.isShowBankroll.val()) {
+            ItemStack bankrollBtn = createItemStack(config.btnBankroll, null,
                     UI_Bankroll.get(), null, 1);
             inv.setItem(45, bankrollBtn);
         }
@@ -116,22 +119,22 @@ public class GuiGame implements Listener {
         // 내 정보
         ArrayList<String> myStateLore = new ArrayList<>();
         myStateLore.add(UI_Click.get());
-        ItemStack myStateBtn = createItemStack(parent.btnMyState, null,
+        ItemStack myStateBtn = createItemStack(config.btnMyState, null,
                 UI_MyState.get(), myStateLore, 1);
         inv.setItem(47, myStateBtn);
 
         // 기록 버튼
-        ItemStack historyBtn = createItemStack(parent.btnHistory, null,
+        ItemStack historyBtn = createItemStack(config.btnHistory, null,
                 UI_History.get(), null, 1);
         inv.setItem(48, historyBtn);
 
         // 스톱 버튼
-        ItemStack closeBtn = createItemStack(parent.btnCashOut, null,
+        ItemStack closeBtn = createItemStack(config.btnCashOut, null,
                 UI_CashOut.get(), null, 1);
         inv.setItem(49, closeBtn);
 
         // 설정 버튼
-        ItemStack cosBtn = createItemStack(parent.btnCashOutSetting, null,
+        ItemStack cosBtn = createItemStack(config.btnCashOutSetting, null,
                 UI_CashOutSetting.get(), null, 1);
         inv.setItem(50, cosBtn);
 
@@ -160,7 +163,7 @@ public class GuiGame implements Listener {
             ItemMeta meta = oldItem.getItemMeta();
 
             String material = plugin.config().getString("BtnIcon." + iconIds[i - 45]);
-            ItemStack item = new ItemStack(Material.getMaterial(material));
+            ItemStack item = Item.fromString(material, Material.PAPER).newItem(oldItem.getAmount());
             item.setItemMeta(meta);
 
             setBothIcon(i, item);

@@ -105,7 +105,7 @@ public class UserManager implements Listener {
         Message_DivUpper.t(to);
         to.sendMessage("   §6§l" + data.getName());
         to.sendMessage("   §3" + NetProfit.get());
-        to.sendMessage("     §3" + plugin.game().getCurrencySymbol() + "  " + doubleFormat.format(user.getNetProfit()));
+        to.sendMessage("     §3" + plugin.config().currencySymbol + "  " + doubleFormat.format(user.getNetProfit()));
         to.sendMessage("     §3Xp " + user.getNetProfitExp());
 
         if (to == data) {
@@ -126,11 +126,11 @@ public class UserManager implements Listener {
 
         Message_DivUpper.t(p);
         p.sendMessage("   §3" + Income.get());
-        p.sendMessage("     §3" + plugin.game().getCurrencySymbol() + "  " + doubleFormat.format(moneyIn) + "  Xp " + expIn);
+        p.sendMessage("     §3" + plugin.config().currencySymbol + "  " + doubleFormat.format(moneyIn) + "  Xp " + expIn);
         p.sendMessage("   §3" + Expense.get());
-        p.sendMessage("     §3" + plugin.game().getCurrencySymbol() + "  " + doubleFormat.format(moneyOut) + "  Xp " + expOut);
+        p.sendMessage("     §3" + plugin.config().currencySymbol + "  " + doubleFormat.format(moneyOut) + "  Xp " + expOut);
         p.sendMessage("   §e" + NetProfit.get());
-        p.sendMessage("     §e" + plugin.game().getCurrencySymbol() + "  " + doubleFormat.format(moneyIn + moneyOut));
+        p.sendMessage("     §e" + plugin.config().currencySymbol + "  " + doubleFormat.format(moneyIn + moneyOut));
         p.sendMessage("     §eXp " + (expIn + expOut));
         Message_DivLower.t(p);
     }
@@ -170,7 +170,7 @@ public class UserManager implements Listener {
 
                 String prefix = "  " + (i + 1) + ". " + of.getName() + "   ";
                 if (type.equals("NetProfit")) {
-                    p.sendMessage(prefix + plugin.game().getCurrencySymbol() + doubleFormat.format(sortedMap.get(type).get(s)));
+                    p.sendMessage(prefix + plugin.config().currencySymbol + doubleFormat.format(sortedMap.get(type).get(s)));
                 } else if (type.equals("NetProfit_Exp")) {
                     p.sendMessage(prefix + "Xp" + integerFormat.format(sortedMap.get(type).get(s)));
                 } else {

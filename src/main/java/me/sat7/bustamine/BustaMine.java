@@ -1,8 +1,8 @@
 package me.sat7.bustamine;
 
-import com.google.common.collect.Lists;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import me.sat7.bustamine.commands.CommandMain;
+import me.sat7.bustamine.config.Config;
 import me.sat7.bustamine.config.Messages;
 import me.sat7.bustamine.config.Sounds;
 import me.sat7.bustamine.manager.GameManager;
@@ -58,7 +58,7 @@ public final class BustaMine extends JavaPlugin {
 
     private Economy econ = null;
 
-    private CustomConfig config;
+    private Config config;
     private CustomConfig bank;
     private UserManager userManager;
     private GameManager gameManager;
@@ -80,7 +80,7 @@ public final class BustaMine extends JavaPlugin {
         return sounds;
     }
 
-    public CustomConfig config() {
+    public Config config() {
         return config;
     }
 
@@ -131,7 +131,7 @@ public final class BustaMine extends JavaPlugin {
 
     private void init() {
         Util.init();
-        config = new CustomConfig(this);
+        config = new Config(this);
         bank = new CustomConfig(this);
         userManager = new UserManager(this);
         gameManager = new GameManager(this);
@@ -139,7 +139,7 @@ public final class BustaMine extends JavaPlugin {
 
         new CommandMain(this);
 
-        setupConfig();
+        config.setup();
         setupBank();
         reloadMessages();
         reloadConfig();
@@ -150,64 +150,6 @@ public final class BustaMine extends JavaPlugin {
 
         gameManager.startGame();
         gameManager.setGameEnable(true);
-    }
-
-    @SuppressWarnings("deprecation")
-    private void setupConfig() {
-        config.setup("Config", config -> {
-            String header = "Changes will take effect from the next round." +
-                    "\nRoundInterval: 3~ (real time second) / Default: 5" +
-                    "\nMultiplierMax: 30~150 / Default: 120" +
-                    "\nProbabilityOfInstaBust: 0.8~20.0 / Default: 1.0 (%) / The final value may vary depending on the MultiplierMax." +
-                    "\n" +
-                    "\nCommand.WhenRoundStart: placeholder: n/a" +
-                    "\nCommand.WhenPlayerBet: placeholder: {player} {amount}" +
-                    "\nCommand.WhenPlayerCashOut: placeholder: {player} {amount} {multiplier} {prize}" +
-                    "\nCommand.WhenRoundEnd: placeholder: {multiplier}";
-            try {
-                config.options().setHeader(Lists.newArrayList(header.split("\n")));
-            } catch (Throwable t) {
-                config.options().header(header);
-            }
-            config.addDefault("CurrencySymbol", "$");
-            config.addDefault("RoundInterval", 5);
-            config.addDefault("MultiplierMax", 120);
-            config.addDefault("ProbabilityOfInstaBust", 2.0);
-            config.addDefault("ShowWinChance", true);
-            config.addDefault("ShowBankroll", true);
-            config.addDefault("LoadPlayerSkin", true);
-            config.addDefault("UIForceUpdate", false);
-
-            config.addDefault("Bet.Small", 10);
-            config.addDefault("Bet.Medium", 100);
-            config.addDefault("Bet.Big", 1000);
-            config.addDefault("Bet.Max", 5000);
-            config.addDefault("Bet.ExpSmall", 10);
-            config.addDefault("Bet.ExpMedium", 100);
-            config.addDefault("Bet.ExpBig", 1000);
-            config.addDefault("Bet.ExpMax", 5000);
-
-            config.addDefault("Broadcast.Jackpot", 30);
-            config.addDefault("Broadcast.InstaBust", true);
-
-            config.addDefault("Command.WhenRoundStart", "");
-            config.addDefault("Command.WhenPlayerBet", "");
-            config.addDefault("Command.WhenPlayerCashOut", "");
-            config.addDefault("Command.WhenRoundEnd", "");
-
-            config.addDefault("BtnIcon.Bankroll", "DIAMOND");
-            config.addDefault("BtnIcon.WinChance", "PAPER");
-            config.addDefault("BtnIcon.MyState", "PAPER");
-            config.addDefault("BtnIcon.History", "PAPER");
-            config.addDefault("BtnIcon.CashOut", "EMERALD");
-            config.addDefault("BtnIcon.CashOutSetting", "PAPER");
-            config.addDefault("BtnIcon.BetSmall", "GOLD_NUGGET");
-            config.addDefault("BtnIcon.BetMedium", "GOLD_INGOT");
-            config.addDefault("BtnIcon.BetBig", "GOLD_BLOCK");
-
-            config.options().copyDefaults(true);
-        });
-        config.save();
     }
 
     private void setupBank() {
@@ -254,19 +196,7 @@ public final class BustaMine extends JavaPlugin {
     }
 
     public void updateConfig() {
-        if (config.contains("Bankroll")) {
-            bank.set("Bankroll.Money", config.getDouble("Bankroll"));
-            bank.save();
-            config.remove("Bankroll");
-        }
-
-        config.rangeInt("MultiplierMax", 30, 150);
-        config.rangeDouble("ProbabilityOfInstaBust", 0.8, 20.0);
-
-        config.rangeInt("RoundInterval", 3, null);
-
-        gameManager.reload();
-        config.save();
+        config.updateConfig();
     }
 
     @Override

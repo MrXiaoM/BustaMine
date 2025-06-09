@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 public class CustomConfig {
-    private final BustaMine plugin;
-    private File file;
-    private FileConfiguration customFile;
+    protected final BustaMine plugin;
+    protected File file;
+    protected FileConfiguration customFile;
     public CustomConfig(BustaMine plugin) {
         this.plugin = plugin;
     }
@@ -48,18 +48,7 @@ public class CustomConfig {
     }
 
     public Item getItem(String key) {
-        String str;
-        Integer dataValue;
-        if (key.contains(":")) {
-            String[] split = key.split(":", 2);
-            str = split[0];
-            dataValue = Util.parseInt(split[1]).orElse(null);
-        } else {
-            str = key;
-            dataValue = null;
-        }
-        Material material = Util.getMaterial(getString(str), Material.PAPER);
-        return new Item(material, dataValue);
+        return Item.fromString(getString(key), Material.PAPER);
     }
 
     public int getInt(String key) {

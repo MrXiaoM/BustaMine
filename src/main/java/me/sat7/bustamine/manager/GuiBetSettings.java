@@ -1,7 +1,7 @@
 package me.sat7.bustamine.manager;
 
 import me.sat7.bustamine.BustaMine;
-import me.sat7.bustamine.utils.CustomConfig;
+import me.sat7.bustamine.config.Config;
 import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.BetGuiHolder;
@@ -25,17 +25,18 @@ import static me.sat7.bustamine.utils.Util.getGlass;
 public class GuiBetSettings implements Listener {
     private final BustaMine plugin;
     private final GameManager parent;
+    private final Config config;
     private int multiplierMax;
 
     public GuiBetSettings(GameManager parent) {
         this.parent = parent;
         this.plugin = parent.plugin();
+        this.config = parent.plugin().config();
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     public void reload() {
-        CustomConfig config = plugin.config();
-        multiplierMax = config.getInt("MultiplierMax");
+        multiplierMax = config.multiplierMax.val();
     }
 
     public void showBetSettingUI(Player p) {
@@ -88,27 +89,27 @@ public class GuiBetSettings implements Listener {
         inv.setItem(13, state);
 
         // -10
-        ItemStack btnBigMinus10 = createItemStack(parent.btnBetBig, null,
+        ItemStack btnBigMinus10 = createItemStack(config.btnBetBig, null,
                 CO_Minus10.get(), btnLore, 1);
         inv.setItem(10, btnBigMinus10);
         // -1
-        ItemStack btnMediumMinus1 = createItemStack(parent.btnBetMedium, null,
+        ItemStack btnMediumMinus1 = createItemStack(config.btnBetMedium, null,
                 CO_Minus1.get(), btnLore, 1);
         inv.setItem(11, btnMediumMinus1);
         // -0.1
-        ItemStack BtnSmallMinus01 = createItemStack(parent.btnBetSmall, null,
+        ItemStack BtnSmallMinus01 = createItemStack(config.btnBetSmall, null,
                 CO_Minus01.get(), btnLore, 1);
         inv.setItem(12, BtnSmallMinus01);
         // +0.1
-        ItemStack btnSmallPlus01 = createItemStack(parent.btnBetSmall, null,
+        ItemStack btnSmallPlus01 = createItemStack(config.btnBetSmall, null,
                 CO_Plus01.get(), btnLore, 1);
         inv.setItem(14, btnSmallPlus01);
         // +1
-        ItemStack btnMediumPlus1 = createItemStack(parent.btnBetMedium, null,
+        ItemStack btnMediumPlus1 = createItemStack(config.btnBetMedium, null,
                 CO_Plus1.get(), btnLore, 1);
         inv.setItem(15, btnMediumPlus1);
         // +10
-        ItemStack btnBigPlus10 = createItemStack(parent.btnBetBig, null,
+        ItemStack btnBigPlus10 = createItemStack(config.btnBetBig, null,
                 CO_Plus10.get(), btnLore, 1);
         inv.setItem(16, btnBigPlus10);
 

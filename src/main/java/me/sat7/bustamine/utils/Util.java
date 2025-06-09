@@ -101,15 +101,12 @@ public class Util {
                 return Material.GLASS_PANE;
         }
     }
-    @SuppressWarnings("deprecation")
+
+    public static ItemStack createItemStack(Property<Item> item, ItemMeta _meta, String name, List<String> lore, int amount) {
+        return createItemStack(item.val(), _meta, name, lore, amount);
+    }
     public static ItemStack createItemStack(Item item, ItemMeta _meta, String name, List<String> lore, int amount) {
-        Material material = item.getMaterial();
-        Integer dataValue = item.getDataValue();
-        if (dataValue != null) {
-            return createItemStack(new ItemStack(material, amount, dataValue.shortValue()), _meta, name, lore);
-        } else {
-            return createItemStack(new ItemStack(material, amount), _meta, name, lore);
-        }
+        return createItemStack(item.newItem(amount), _meta, name, lore);
     }
     public static ItemStack createItemStack(Material material, ItemMeta _meta, String name, List<String> lore, int amount) {
         return createItemStack(new ItemStack(material, amount), _meta, name, lore);

@@ -1,11 +1,10 @@
 package me.sat7.bustamine.manager;
 
 import me.sat7.bustamine.BustaMine;
-import me.sat7.bustamine.utils.CustomConfig;
+import me.sat7.bustamine.config.Config;
 import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaState;
 import me.sat7.bustamine.manager.enums.BustaType;
-import me.sat7.bustamine.utils.Item;
 import me.sat7.bustamine.utils.Util;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -48,22 +47,11 @@ public class GameManager {
     
     private final GuiGame guiGame;
     private final GuiBetSettings guiBetSettings;
-
-    private String commandRoundStart, commandPlayerBet, commandPlayerCashOut, commandRoundEnd;
-
-    protected Item btnBankroll, btnMyState, btnHistory, btnCashOut, btnCashOutSetting, btnWinChance;
-    protected Item btnBetSmall, btnBetMedium, btnBetBig;
-
-    private int roundInterval;
-    private int betSmall, betMedium, betBig, betMax;
-    private int betExpSmall, betExpMedium, betExpBig, betExpMax;
-    private String currencySymbol;
-    protected boolean forceUpdateUI, isShowWinChance, isShowBankroll;
-    private boolean isBroadcastInstaBust;
-    private int broadcastJackPot;
+    private final Config config;
 
     public GameManager(BustaMine plugin) {
         this.plugin = plugin;
+        this.config = plugin.config();
         this.guiGame = new GuiGame(this);
         this.guiBetSettings = new GuiBetSettings(this);
     }
@@ -80,48 +68,9 @@ public class GameManager {
         return plugin;
     }
 
-    public String getCurrencySymbol() {
-        return currencySymbol;
-    }
-
     public void reload() {
-        CustomConfig config = plugin.config();
-        maxMulti = config.getInt("MultiplierMax");
-        baseInstaBust = Math.max(0, config.getDouble("ProbabilityOfInstaBust") / 100 - odd(maxMulti - 1));
-        commandRoundStart = config.getString("Command.WhenRoundStart", "");
-        commandPlayerBet = config.getString("Command.WhenPlayerBet", "");
-        commandPlayerCashOut = config.getString("Command.WhenPlayerCashOut", "");
-        commandRoundEnd = config.getString("Command.WhenRoundEnd", "");
-        forceUpdateUI = config.getBoolean("UIForceUpdate", false);
-        isShowWinChance = config.getBoolean("ShowWinChance");
-        isShowBankroll = config.getBoolean("ShowBankroll");
-
-        btnBankroll = config.getItem("BtnIcon.Bankroll");
-        btnMyState = config.getItem("BtnIcon.MyState");
-        btnHistory = config.getItem("BtnIcon.History");
-        btnCashOut = config.getItem("BtnIcon.CashOut");
-        btnCashOutSetting = config.getItem("BtnIcon.CashOutSetting");
-        btnWinChance = config.getItem("BtnIcon.WinChance");
-        btnBetSmall = config.getItem("BtnIcon.BetSmall");
-        btnBetMedium = config.getItem("BtnIcon.BetMedium");
-        btnBetBig = config.getItem("BtnIcon.BetBig");
-
-        roundInterval = config.getInt("RoundInterval");
-
-        betSmall = config.getInt("Bet.Small");
-        betMedium = config.getInt("Bet.Medium");
-        betBig = config.getInt("Bet.Big");
-        betMax = config.getInt("Bet.Max");
-        betExpSmall = config.getInt("Bet.ExpSmall");
-        betExpMedium = config.getInt("Bet.ExpMedium");
-        betExpBig = config.getInt("Bet.ExpBig");
-        betExpMax = config.getInt("Bet.ExpMax");
-
-        currencySymbol = config.getString("CurrencySymbol");
-
-        isBroadcastInstaBust = config.getBoolean("Broadcast.InstaBust");
-        broadcastJackPot = config.getInt("Broadcast.JackPot");
-
+        maxMulti = config.multiplierMax.val();
+        baseInstaBust = Math.max(0, config.probabilityOfInstaBust.val() / 100 - odd(maxMulti - 1));
         gui().reload();
         betSettings().reload();
     }
@@ -131,20 +80,20 @@ public class GameManager {
     }
 
     public void runCommandRoundStart() {
-        if (commandRoundStart.isEmpty()) return;
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), commandRoundStart);
+        if (config.commandRoundStart.isEmpty()) return;
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), config.commandRoundStart.val());
     }
 
     public void runCommandBet(Player p, int amount) {
-        if (commandPlayerBet.isEmpty()) return;
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), commandPlayerBet
+        if (config.commandPlayerBet.isEmpty()) return;
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), config.commandPlayerBet
                 .replace("{player}", p.getName()).replace("{amount}", amount + ""));
     }
 
     public void runCommandCashOut(Player p, double amount, int multiplier, double prize) {
-        if (commandPlayerCashOut.isEmpty()) return;
+        if (config.commandPlayerCashOut.isEmpty()) return;
         double temp = multiplier / 100.0f;
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), commandPlayerCashOut
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), config.commandPlayerCashOut
                 .replace("{player}", p.getName())
                 .replace("{amount}", amount + "")
                 .replace("{multiplier}", temp + "")
@@ -153,9 +102,9 @@ public class GameManager {
     }
 
     public void runCommandRoundEnd(int multiplier) {
-        if (commandRoundEnd.isEmpty()) return;
+        if (config.commandRoundEnd.isEmpty()) return;
         double temp = multiplier / 100.0f;
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), commandRoundEnd
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), config.commandRoundEnd
                 .replace("{multiplier}", temp + "")
         );
     }
@@ -214,10 +163,10 @@ public class GameManager {
         }
 
         bState = BustaState.BET;
-        betTimeLeft = roundInterval + 1;
+        betTimeLeft = config.roundInterval.val() + 1;
 
-        if (isShowWinChance) {
-            ItemStack winChance = createItemStack(btnWinChance, null,
+        if (config.isShowWinChance.val()) {
+            ItemStack winChance = createItemStack(config.btnWinChance, null,
                     UI_WinChance.get(), null, 1);
 
             double bustChance = odd(maxMulti - 1);
@@ -239,9 +188,9 @@ public class GameManager {
             gui().setBothIcon(46, null);
         }
 
-        if (isShowBankroll) {
+        if (config.isShowBankroll.val()) {
             if (gui().getMoneyIcon(45) == null) {
-                ItemStack bankrollBtn = createItemStack(btnBankroll, null,
+                ItemStack bankrollBtn = createItemStack(config.btnBankroll, null,
                         UI_Bankroll.get(), null, 1);
                 gui().setBothIcon(45, bankrollBtn);
             }
@@ -252,27 +201,27 @@ public class GameManager {
         }
 
         {
-            ItemStack bet10Btn = createItemStack(btnBetSmall, null,
-                    UI_BetBtn.get() + " §e" + currencySymbol + betSmall, null, 1);
+            ItemStack bet10Btn = createItemStack(config.btnBetSmall, null,
+                    UI_BetBtn.get() + " §e" + config.currencySymbol + config.betSmall, null, 1);
             gui().setMoneyIcon(51, bet10Btn);
-            ItemStack betE1Btn = createItemStack(btnBetSmall, null,
-                    UI_BetBtn.get() + " §eXp" + betExpSmall, null, 1);
+            ItemStack betE1Btn = createItemStack(config.btnBetSmall, null,
+                    UI_BetBtn.get() + " §eXp" + config.betExpSmall, null, 1);
             gui().setExpIcon(51, betE1Btn);
 
             // 100
-            ItemStack bet100Btn = createItemStack(btnBetMedium, null,
-                    UI_BetBtn.get() + " §e" + currencySymbol + betMedium, null, 1);
+            ItemStack bet100Btn = createItemStack(config.btnBetMedium, null,
+                    UI_BetBtn.get() + " §e" + config.currencySymbol + config.betMedium, null, 1);
             gui().setMoneyIcon(52, bet100Btn);
-            ItemStack betE2Btn = createItemStack(btnBetMedium, null,
-                    UI_BetBtn.get() + " §eXp" + betExpMedium, null, 1);
+            ItemStack betE2Btn = createItemStack(config.btnBetMedium, null,
+                    UI_BetBtn.get() + " §eXp" + config.betExpMedium, null, 1);
             gui().setExpIcon(52, betE2Btn);
 
             // 1000
-            ItemStack bet1000Btn = createItemStack(btnBetBig, null,
-                    UI_BetBtn.get() + " §e" + currencySymbol + betBig, null, 1);
+            ItemStack bet1000Btn = createItemStack(config.btnBetBig, null,
+                    UI_BetBtn.get() + " §e" + config.currencySymbol + config.betBig, null, 1);
             gui().setMoneyIcon(53, bet1000Btn);
-            ItemStack betE3Btn = createItemStack(btnBetBig, null,
-                    UI_BetBtn.get() + " §eXp" + betExpBig, null, 1);
+            ItemStack betE3Btn = createItemStack(config.btnBetBig, null,
+                    UI_BetBtn.get() + " §eXp" + config.betExpBig, null, 1);
             gui().setExpIcon(53, betE3Btn);
         }
 
@@ -346,7 +295,7 @@ public class GameManager {
 
             gui().updateBothIcon(49, newLore);
 
-            if (forceUpdateUI) {
+            if (config.isForceUpdateUI.val()) {
                 for (UUID uuid : playerMap.keySet()) {
                     if (uuid == null)
                         continue;
@@ -366,10 +315,10 @@ public class GameManager {
 
         runCommandRoundEnd(curNum);
 
-        if (instaBust && isBroadcastInstaBust) {
+        if (instaBust && config.isBroadcastInstaBust.val()) {
             Bukkit.getServer().broadcastMessage(prefix() + Message_Instabust.get());
         }
-        if (broadcastJackPot * 100 <= curNum) {
+        if (config.broadcastJackpot.val() * 100 <= curNum) {
             Bukkit.getServer().broadcastMessage(prefix() + "§a§lBusted! : x" + doubleFormat.format(curNum / 100.0));
         }
 
@@ -441,7 +390,7 @@ public class GameManager {
         }
 
         if (type == BustaType.MONEY) {
-            if (old + amount > betMax) {
+            if (old + amount > config.betMax.val()) {
                 BettingLimit.t(p);
                 return;
             }
@@ -459,8 +408,8 @@ public class GameManager {
                 runCommandBet(p, amount);
                 activePlayerMap.put(p.getUniqueId(), old + amount);
                 Message_DivUpper.t(p);
-                p.sendMessage("   §f" + Bet.get() + currencySymbol + (old + amount));
-                p.sendMessage("   §e" + MyBal.get() + ": " + currencySymbol + doubleFormat.format(economy.getBalance(p)));
+                p.sendMessage("   §f" + Bet.get() + config.currencySymbol + (old + amount));
+                p.sendMessage("   §e" + MyBal.get() + ": " + config.currencySymbol + doubleFormat.format(economy.getBalance(p)));
                 Message_DivLower.t(p);
 
                 if (firstBet) {
@@ -469,7 +418,7 @@ public class GameManager {
                         try {
                             Player player = Bukkit.getPlayer(uuid);
                             if (player != null) {
-                                player.sendMessage("§6♣ " + p.getName() + " " + Bet.get() + currencySymbol + doubleFormat.format(old + amount));
+                                player.sendMessage("§6♣ " + p.getName() + " " + Bet.get() + config.currencySymbol + doubleFormat.format(old + amount));
                             }
                         } catch (Exception ignored) {
                         }
@@ -477,12 +426,12 @@ public class GameManager {
                 }
             } else {
                 Message_NotEnoughMoney.t(p);
-                p.sendMessage(MyBal.get() + ": " + currencySymbol + doubleFormat.format(plugin.getEconomy().getBalance(p)));
+                p.sendMessage(MyBal.get() + ": " + config.currencySymbol + doubleFormat.format(plugin.getEconomy().getBalance(p)));
                 return;
             }
         }
         else {
-            if (old + amount > betExpMax) {
+            if (old + amount > config.betExpMax.val()) {
                 BettingLimit.t(p);
                 return;
             }
@@ -531,7 +480,7 @@ public class GameManager {
                 ItemStack skull = new ItemStack(m, 1);
                 ItemMeta meta = skull.getItemMeta();
 
-                if (plugin.config().getBoolean("LoadPlayerSkin")) {
+                if (config.isLoadPlayerSkin.val()) {
                     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> loadAndSetSkin(p, playerMap.size() - 1));
                 }
 
@@ -539,7 +488,7 @@ public class GameManager {
                     meta.setDisplayName("§6" + p.getName());
                     ArrayList<String> lore = new ArrayList<>();
                     if (type == BustaType.MONEY) {
-                        lore.add(UI_PlayerInfo.get().replace("{amount}", plugin.config().getString("CurrencySymbol") + amount));
+                        lore.add(UI_PlayerInfo.get().replace("{amount}", config.currencySymbol.val() + amount));
                     } else {
                         lore.add(UI_PlayerInfo.get().replace("{amount}", "Xp" + amount));
                     }
@@ -559,7 +508,7 @@ public class GameManager {
                     if (meta != null) {
                         ArrayList<String> lore = new ArrayList<>();
                         if (type == BustaType.MONEY) {
-                            lore.add(UI_PlayerInfo.get().replace("{amount}", plugin.config().getString("CurrencySymbol") + (old + amount)));
+                            lore.add(UI_PlayerInfo.get().replace("{amount}", config.currencySymbol.val() + (old + amount)));
                         } else {
                             lore.add(UI_PlayerInfo.get().replace("{amount}", "Xp" + (old + amount)));
                         }
@@ -602,9 +551,9 @@ public class GameManager {
         Message_DivUpper.t(p);
         p.sendMessage("   §f" + CashedOut.get() + ": x" + doubleFormat.format(curNum / 100.0));
         if (playerMap.get(p.getUniqueId()) == BustaType.MONEY) {
-            p.sendMessage("   §3" + Profit.get() + ": " + currencySymbol + doubleFormat.format(prize - bet));
+            p.sendMessage("   §3" + Profit.get() + ": " + config.currencySymbol + doubleFormat.format(prize - bet));
             plugin.getEconomy().depositPlayer(p, prize);
-            p.sendMessage("   §e" + MyBal.get() + ": " + currencySymbol + doubleFormat.format(plugin.getEconomy().getBalance(p)));
+            p.sendMessage("   §e" + MyBal.get() + ": " + config.currencySymbol + doubleFormat.format(plugin.getEconomy().getBalance(p)));
         } else {
             p.sendMessage("   §3" + Profit.get() + ": Xp" + (int) ((int) prize - bet));
             p.giveExp((int) prize);
@@ -657,11 +606,11 @@ public class GameManager {
             plugin.bank().plusInteger("Bankroll.Exp", amount.intValue());
         }
 
-        if (isShowBankroll) {
+        if (config.isShowBankroll.val()) {
             ArrayList<String> lore = new ArrayList<>();
             double bankMoney = plugin.bank().getDouble("Bankroll.Money");
             int bankExp = plugin.bank().getInt("Bankroll.Exp");
-            lore.add("§e" + currencySymbol + String.format("%.1f", bankMoney / 1000.0) + "K");
+            lore.add("§e" + config.currencySymbol + String.format("%.1f", bankMoney / 1000.0) + "K");
             lore.add("§eXp" + String.format("%.1f", bankExp / 1000.0) + "K");
 
             gui().updateBothIcon(45, lore);
