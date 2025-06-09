@@ -1,6 +1,7 @@
 package me.sat7.bustamine.manager;
 
 import me.sat7.bustamine.BustaMine;
+import me.sat7.bustamine.CustomConfig;
 import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaState;
 import me.sat7.bustamine.manager.enums.BustaType;
@@ -20,7 +21,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static me.sat7.bustamine.BustaMine.log;
-import static me.sat7.bustamine.Game.doubleFormat;
 import static me.sat7.bustamine.config.Messages.*;
 import static me.sat7.bustamine.config.Messages.UI_BetBtn;
 import static me.sat7.bustamine.utils.Util.*;
@@ -45,10 +45,18 @@ public class GameManager {
     final Map<UUID, Integer> activePlayerMap = new ConcurrentHashMap<>();
     final Map<UUID, Integer> headPos = new HashMap<>();
     
-    final GuiGame guiGame;
-    final GuiBetSettings guiBetSettings;
+    private final GuiGame guiGame;
+    private final GuiBetSettings guiBetSettings;
 
     private String commandRoundStart, commandPlayerBet, commandPlayerCashOut, commandRoundEnd;
+    private String btnWinChance;
+    private int roundInterval;
+    private int betSmall, betMedium, betBig, betMax;
+    private int betExpSmall, betExpMedium, betExpBig, betExpMax;
+    private String currencySymbol;
+    protected boolean forceUpdateUI, isShowWinChance, isShowBankroll;
+    private boolean isBroadcastInstaBust;
+    private int broadcastJackPot;
 
     public GameManager(BustaMine plugin) {
         this.plugin = plugin;
@@ -68,13 +76,38 @@ public class GameManager {
         return plugin;
     }
 
+    public String getCurrencySymbol() {
+        return currencySymbol;
+    }
+
     public void reload() {
-        maxMulti = plugin.ccConfig.get().getInt("MultiplierMax");
-        baseInstaBust = Math.max(0, plugin.ccConfig.get().getDouble("ProbabilityOfInstaBust") / 100 - odd(maxMulti - 1));
-        commandRoundStart = plugin.ccConfig.get().getString("Command.WhenRoundStart", "");
-        commandPlayerBet = plugin.ccConfig.get().getString("Command.WhenPlayerBet", "");
-        commandPlayerCashOut = plugin.ccConfig.get().getString("Command.WhenPlayerCashOut", "");
-        commandRoundEnd = plugin.ccConfig.get().getString("Command.WhenRoundEnd", "");
+        CustomConfig config = plugin.config();
+        maxMulti = config.getInt("MultiplierMax");
+        baseInstaBust = Math.max(0, config.getDouble("ProbabilityOfInstaBust") / 100 - odd(maxMulti - 1));
+        commandRoundStart = config.getString("Command.WhenRoundStart", "");
+        commandPlayerBet = config.getString("Command.WhenPlayerBet", "");
+        commandPlayerCashOut = config.getString("Command.WhenPlayerCashOut", "");
+        commandRoundEnd = config.getString("Command.WhenRoundEnd", "");
+        forceUpdateUI = config.getBoolean("UIForceUpdate", false);
+        isShowWinChance = config.getBoolean("ShowWinChance");
+        isShowBankroll = config.getBoolean("ShowBankroll");
+        btnWinChance = config.getString("BtnIcon.WinChance");
+        roundInterval = config.getInt("RoundInterval");
+
+        betSmall = config.getInt("Bet.Small");
+        betMedium = config.getInt("Bet.Medium");
+        betBig = config.getInt("Bet.Big");
+        betMax = config.getInt("Bet.Max");
+        betExpSmall = config.getInt("Bet.ExpSmall");
+        betExpMedium = config.getInt("Bet.ExpMedium");
+        betExpBig = config.getInt("Bet.ExpBig");
+        betExpMax = config.getInt("Bet.ExpMax");
+
+        currencySymbol = config.getString("CurrencySymbol");
+
+        isBroadcastInstaBust = config.getBoolean("Broadcast.InstaBust");
+        broadcastJackPot = config.getInt("Broadcast.JackPot");
+
         gui().reload();
         betSettings().reload();
     }
@@ -167,10 +200,10 @@ public class GameManager {
         }
 
         bState = BustaState.BET;
-        betTimeLeft = plugin.ccConfig.get().getInt("RoundInterval") + 1;
+        betTimeLeft = roundInterval + 1;
 
-        if (plugin.ccConfig.get().getBoolean("ShowWinChance")) {
-            ItemStack winChance = createItemStack(Material.getMaterial(plugin.ccConfig.get().getString("BtnIcon.WinChance")), null,
+        if (isShowWinChance) {
+            ItemStack winChance = createItemStack(Material.getMaterial(btnWinChance), null,
                     UI_WinChance.get(), null, 1);
 
             double bustChance = odd(maxMulti - 1);
@@ -192,9 +225,8 @@ public class GameManager {
             gui().setBothIcon(46, null);
         }
 
-        if (plugin.ccConfig.get().getBoolean("ShowBankroll")) {
+        if (isShowBankroll) {
             if (gui().getMoneyIcon(45) == null) {
-                //System.out.println("뱅크롤버튼 재생성");
                 ItemStack bankrollBtn = createItemStack(Material.getMaterial(gui().btnBankroll), null,
                         UI_Bankroll.get(), null, 1);
                 gui().setBothIcon(45, bankrollBtn);
@@ -207,26 +239,26 @@ public class GameManager {
 
         {
             ItemStack bet10Btn = createItemStack(Material.getMaterial(betSettings().btnBetSmall), null,
-                    UI_BetBtn.get() + " §e" + plugin.ccConfig.get().getString("CurrencySymbol") + plugin.ccConfig.get().getInt("Bet.Small"), null, 1);
+                    UI_BetBtn.get() + " §e" + currencySymbol + betSmall, null, 1);
             gui().setMoneyIcon(51, bet10Btn);
             ItemStack betE1Btn = createItemStack(Material.getMaterial(betSettings().btnBetSmall), null,
-                    UI_BetBtn.get() + " §eXp" + plugin.ccConfig.get().getInt("Bet.ExpSmall"), null, 1);
+                    UI_BetBtn.get() + " §eXp" + betExpSmall, null, 1);
             gui().setExpIcon(51, betE1Btn);
 
             // 100
             ItemStack bet100Btn = createItemStack(Material.getMaterial(betSettings().btnBetMedium), null,
-                    UI_BetBtn.get() + " §e" + plugin.ccConfig.get().getString("CurrencySymbol") + plugin.ccConfig.get().getInt("Bet.Medium"), null, 1);
+                    UI_BetBtn.get() + " §e" + currencySymbol + betMedium, null, 1);
             gui().setMoneyIcon(52, bet100Btn);
             ItemStack betE2Btn = createItemStack(Material.getMaterial(betSettings().btnBetMedium), null,
-                    UI_BetBtn.get() + " §eXp" + plugin.ccConfig.get().getInt("Bet.ExpMedium"), null, 1);
+                    UI_BetBtn.get() + " §eXp" + betExpMedium, null, 1);
             gui().setExpIcon(52, betE2Btn);
 
             // 1000
             ItemStack bet1000Btn = createItemStack(Material.getMaterial(betSettings().btnBetBig), null,
-                    UI_BetBtn.get() + " §e" + plugin.ccConfig.get().getString("CurrencySymbol") + plugin.ccConfig.get().getInt("Bet.Big"), null, 1);
+                    UI_BetBtn.get() + " §e" + currencySymbol + betBig, null, 1);
             gui().setMoneyIcon(53, bet1000Btn);
             ItemStack betE3Btn = createItemStack(Material.getMaterial(betSettings().btnBetBig), null,
-                    UI_BetBtn.get() + " §eXp" + plugin.ccConfig.get().getInt("Bet.ExpBig"), null, 1);
+                    UI_BetBtn.get() + " §eXp" + betExpBig, null, 1);
             gui().setExpIcon(53, betE3Btn);
         }
 
@@ -300,14 +332,14 @@ public class GameManager {
 
             gui().updateBothIcon(49, newLore);
 
-            if (plugin.ccConfig.get().getBoolean("UIForceUpdate", false)) {
+            if (forceUpdateUI) {
                 for (UUID uuid : playerMap.keySet()) {
                     if (uuid == null)
                         continue;
 
                     Player player = Bukkit.getPlayer(uuid);
                     if (player != null)
-                        player.updateInventory();
+                        Util.updateInventory(player);
                 }
             }
 
@@ -320,10 +352,10 @@ public class GameManager {
 
         runCommandRoundEnd(curNum);
 
-        if (instaBust && plugin.ccConfig.get().getBoolean("Broadcast.InstaBust")) {
+        if (instaBust && isBroadcastInstaBust) {
             Bukkit.getServer().broadcastMessage(prefix() + Message_Instabust.get());
         }
-        if (plugin.ccConfig.get().getInt("Broadcast.Jackpot") * 100 <= curNum) {
+        if (broadcastJackPot * 100 <= curNum) {
             Bukkit.getServer().broadcastMessage(prefix() + "§a§lBusted! : x" + doubleFormat.format(curNum / 100.0));
         }
 
@@ -378,8 +410,7 @@ public class GameManager {
 
         gui().updateBothIcon(48, historyLore);
 
-        // 데이터 저장
-        plugin.ccBank.save();
+        plugin.bank().save();
         plugin.users().save();
     }
 
@@ -396,7 +427,7 @@ public class GameManager {
         }
 
         if (type == BustaType.MONEY) {
-            if (old + amount > plugin.ccConfig.get().getInt("Bet.Max")) {
+            if (old + amount > betMax) {
                 BettingLimit.t(p);
                 return;
             }
@@ -406,7 +437,7 @@ public class GameManager {
                 EconomyResponse r = economy.withdrawPlayer(p, amount);
 
                 if (!r.transactionSuccess()) {
-                    p.sendMessage(String.format("An error occured: %s", r.errorMessage));
+                    p.sendMessage(String.format("An error occurred: %s", r.errorMessage));
                     return;
                 }
 
@@ -414,8 +445,8 @@ public class GameManager {
                 runCommandBet(p, amount);
                 activePlayerMap.put(p.getUniqueId(), old + amount);
                 Message_DivUpper.t(p);
-                p.sendMessage("   §f" + Bet.get() + plugin.ccConfig.get().getString("CurrencySymbol") + (old + amount));
-                p.sendMessage("   §e" + MyBal.get() + ": " + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(economy.getBalance(p)));
+                p.sendMessage("   §f" + Bet.get() + currencySymbol + (old + amount));
+                p.sendMessage("   §e" + MyBal.get() + ": " + currencySymbol + doubleFormat.format(economy.getBalance(p)));
                 Message_DivLower.t(p);
 
                 if (firstBet) {
@@ -424,7 +455,7 @@ public class GameManager {
                         try {
                             Player player = Bukkit.getPlayer(uuid);
                             if (player != null) {
-                                player.sendMessage("§6♣ " + p.getName() + " " + Bet.get() + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(old + amount));
+                                player.sendMessage("§6♣ " + p.getName() + " " + Bet.get() + currencySymbol + doubleFormat.format(old + amount));
                             }
                         } catch (Exception ignored) {
                         }
@@ -432,12 +463,12 @@ public class GameManager {
                 }
             } else {
                 Message_NotEnoughMoney.t(p);
-                p.sendMessage(MyBal.get() + ": " + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(plugin.getEconomy().getBalance(p)));
+                p.sendMessage(MyBal.get() + ": " + currencySymbol + doubleFormat.format(plugin.getEconomy().getBalance(p)));
                 return;
             }
         }
         else {
-            if (old + amount > plugin.ccConfig.get().getInt("Bet.ExpMax")) {
+            if (old + amount > betExpMax) {
                 BettingLimit.t(p);
                 return;
             }
@@ -486,7 +517,7 @@ public class GameManager {
                 ItemStack skull = new ItemStack(m, 1);
                 ItemMeta meta = skull.getItemMeta();
 
-                if (plugin.ccConfig.get().getBoolean("LoadPlayerSkin")) {
+                if (plugin.config().getBoolean("LoadPlayerSkin")) {
                     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> loadAndSetSkin(p, playerMap.size() - 1));
                 }
 
@@ -494,7 +525,7 @@ public class GameManager {
                     meta.setDisplayName("§6" + p.getName());
                     ArrayList<String> lore = new ArrayList<>();
                     if (type == BustaType.MONEY) {
-                        lore.add(UI_PlayerInfo.get().replace("{amount}", plugin.ccConfig.get().getString("CurrencySymbol") + amount));
+                        lore.add(UI_PlayerInfo.get().replace("{amount}", plugin.config().getString("CurrencySymbol") + amount));
                     } else {
                         lore.add(UI_PlayerInfo.get().replace("{amount}", "Xp" + amount));
                     }
@@ -514,7 +545,7 @@ public class GameManager {
                     if (meta != null) {
                         ArrayList<String> lore = new ArrayList<>();
                         if (type == BustaType.MONEY) {
-                            lore.add(UI_PlayerInfo.get().replace("{amount}", plugin.ccConfig.get().getString("CurrencySymbol") + (old + amount)));
+                            lore.add(UI_PlayerInfo.get().replace("{amount}", plugin.config().getString("CurrencySymbol") + (old + amount)));
                         } else {
                             lore.add(UI_PlayerInfo.get().replace("{amount}", "Xp" + (old + amount)));
                         }
@@ -557,9 +588,9 @@ public class GameManager {
         Message_DivUpper.t(p);
         p.sendMessage("   §f" + CashedOut.get() + ": x" + doubleFormat.format(curNum / 100.0));
         if (playerMap.get(p.getUniqueId()) == BustaType.MONEY) {
-            p.sendMessage("   §3" + Profit.get() + ": " + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(prize - bet));
+            p.sendMessage("   §3" + Profit.get() + ": " + currencySymbol + doubleFormat.format(prize - bet));
             plugin.getEconomy().depositPlayer(p, prize);
-            p.sendMessage("   §e" + MyBal.get() + ": " + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(plugin.getEconomy().getBalance(p)));
+            p.sendMessage("   §e" + MyBal.get() + ": " + currencySymbol + doubleFormat.format(plugin.getEconomy().getBalance(p)));
         } else {
             p.sendMessage("   §3" + Profit.get() + ": Xp" + (int) ((int) prize - bet));
             p.giveExp((int) prize);
@@ -605,35 +636,34 @@ public class GameManager {
         updateNetProfit(p, playerMap.get(p.getUniqueId()), prize);
     }
 
-    private void updateBankroll(BustaType type, double amount) {
-        double old;
+    private void updateBankroll(BustaType type, Number amount) {
         if (type == BustaType.MONEY) {
-            old = plugin.ccBank.get().getDouble("Bankroll.Money");
-            plugin.ccBank.get().set("Bankroll.Money", old + amount);
+            plugin.bank().plusDouble("Bankroll.Money", amount.doubleValue());
         } else {
-            old = plugin.ccBank.get().getInt("Bankroll.Exp");
-            plugin.ccBank.get().set("Bankroll.Exp", (int) (old + amount));
+            plugin.bank().plusInteger("Bankroll.Exp", amount.intValue());
         }
 
-        if (plugin.ccConfig.get().getBoolean("ShowBankroll")) {
+        if (isShowBankroll) {
             ArrayList<String> lore = new ArrayList<>();
-            lore.add("§e" + plugin.ccConfig.get().getString("CurrencySymbol") + (int) (plugin.ccBank.get().getDouble("Bankroll.Money") / 1000) + "K");
-            lore.add("§eXp" + (plugin.ccBank.get().getInt("Bankroll.Exp") / 1000) + "K");
+            double bankMoney = plugin.bank().getDouble("Bankroll.Money");
+            int bankExp = plugin.bank().getInt("Bankroll.Exp");
+            lore.add("§e" + currencySymbol + String.format("%.1f", bankMoney / 1000.0) + "K");
+            lore.add("§eXp" + String.format("%.1f", bankExp / 1000.0) + "K");
 
             gui().updateBothIcon(45, lore);
         }
 
-        if (amount > 0) {
+        if (amount.doubleValue() > 0) {
             if (type == BustaType.MONEY) {
-                plugin.ccBank.get().set("Statistics.Income.Money", plugin.ccBank.get().getDouble("Statistics.Income.Money") + amount);
+                plugin.bank().plusDouble("Statistics.Income.Money", amount.doubleValue());
             } else {
-                plugin.ccBank.get().set("Statistics.Income.Exp", (int) (plugin.ccBank.get().getInt("Statistics.Income.Exp") + amount));
+                plugin.bank().plusInteger("Statistics.Income.Exp", amount.intValue());
             }
         } else {
             if (type == BustaType.MONEY) {
-                plugin.ccBank.get().set("Statistics.Expense.Money", plugin.ccBank.get().getDouble("Statistics.Expense.Money") + amount);
+                plugin.bank().plusDouble("Statistics.Expense.Money", amount.doubleValue());
             } else {
-                plugin.ccBank.get().set("Statistics.Expense.Exp", (int) (plugin.ccBank.get().getInt("Statistics.Expense.Exp") + amount));
+                plugin.bank().plusInteger("Statistics.Expense.Exp", amount.intValue());
             }
         }
     }

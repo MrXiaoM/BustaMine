@@ -1,12 +1,12 @@
 package me.sat7.bustamine.manager;
 
 import me.sat7.bustamine.BustaMine;
+import me.sat7.bustamine.CustomConfig;
 import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.BetGuiHolder;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -36,7 +36,7 @@ public class GuiBetSettings implements Listener {
     }
 
     public void reload() {
-        FileConfiguration config = plugin.ccConfig.get();
+        CustomConfig config = plugin.config();
         btnBetSmall = config.getString("BtnIcon.BetSmall");
         btnBetMedium = config.getString("BtnIcon.BetMedium");
         btnBetBig = config.getString("BtnIcon.BetBig");

@@ -2,7 +2,6 @@ package me.sat7.bustamine.commands;
 
 import me.sat7.bustamine.BustaMine;
 import me.sat7.bustamine.CustomConfig;
-import me.sat7.bustamine.Game;
 import me.sat7.bustamine.manager.enums.BustaType;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
@@ -82,12 +81,12 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     if (args.length > 1) {
                         Player p = Bukkit.getPlayer(args[1]);
                         if (p != null) {
-                            Game.showPlayerInfo(plugin, player, p);
+                            plugin.users().showPlayerInfo(player, p);
                         } else {
                             Message_PlayerNotExist.t(player);
                         }
                     } else {
-                        Game.showPlayerInfo(plugin, player, player);
+                        plugin.users().showPlayerInfo(player, player);
                     }
                     break;
                 case "top":
@@ -97,12 +96,12 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
                     if (args.length >= 2) {
                         if (args[1].equals("NetProfit") || args[1].equals("NetProfit_Exp") || args[1].equals("GamesPlayed")) {
-                            Game.top(plugin.users(), player, args[1]);
+                            plugin.users().top(player, args[1]);
                         } else {
                             msg(player, "[NetProfit | NetProfit_Exp | GamesPlayed]");
                         }
                     } else {
-                        Game.top(plugin.users(), player, "NetProfit");
+                        plugin.users().top(player, "NetProfit");
                     }
                     break;
                 case "reloadConfig":
@@ -151,26 +150,25 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         return Message_NoPermission.t(player);
                     }
 
-                    CustomConfig debugResult = new CustomConfig(plugin);
                     String name = "TestResult_" + System.currentTimeMillis();
-                    debugResult.setup(name);
-
-                    ArrayList<Integer> tempList = new ArrayList<>();
-                    for (int i = 0; i < 100000; i++) {
-                        tempList.add(plugin.game().genBustNum());
-                    }
-
-                    debugResult.get().set("result", tempList);
+                    CustomConfig debugResult = new CustomConfig(plugin);
+                    debugResult.setup(name, config -> {
+                        ArrayList<Integer> tempList = new ArrayList<>();
+                        for (int i = 0; i < 100000; i++) {
+                            tempList.add(plugin.game().genBustNum());
+                        }
+                        config.set("result", tempList);
+                    });
                     debugResult.save();
 
-                    msg(player, "File generated. plugins/BustaMine/" + name + ".yml");
+                    msg(player, "File generated. plugins/" + plugin.getDescription().getName() + "/" + name + ".yml");
                     break;
                 case "statistics":
                     if (!player.hasPermission("bm.admin")) {
                         return Message_NoPermission.t(player);
                     }
 
-                    Game.showStatistics(plugin, player);
+                    plugin.users().showStatistics(player);
                     break;
             }
         }

@@ -1,13 +1,13 @@
 package me.sat7.bustamine.manager;
 
 import me.sat7.bustamine.BustaMine;
-import me.sat7.bustamine.Game;
+import me.sat7.bustamine.CustomConfig;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.BustaGuiHolder;
+import me.sat7.bustamine.manager.gui.IBustaMineGui;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,7 +21,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.List;
 
-import static me.sat7.bustamine.Game.closeAllGameUI;
 import static me.sat7.bustamine.config.Messages.*;
 import static me.sat7.bustamine.utils.Util.*;
 
@@ -35,7 +34,6 @@ public class GuiGame implements Listener {
     int betExpSmall, betExpMedium, betExpBig;
     int betMoneySmall, betMoneyMedium, betMoneyBig;
 
-    boolean isShowBankroll;
     protected String btnBankroll, btnMyState, btnHistory, btnCashOut, btnCashOutSetting;
 
     public GuiGame(GameManager parent) {
@@ -45,7 +43,7 @@ public class GuiGame implements Listener {
     }
 
     public void reload() {
-        FileConfiguration config = plugin.ccConfig.get();
+        CustomConfig config = plugin.config();
         betExpSmall = config.getInt("Bet.ExpSmall");
         betExpMedium = config.getInt("Bet.ExpMedium");
         betExpBig = config.getInt("Bet.ExpBig");
@@ -53,16 +51,17 @@ public class GuiGame implements Listener {
         betMoneyMedium = config.getInt("Bet.Medium");
         betMoneyBig = config.getInt("Bet.Big");
 
-        isShowBankroll = config.getBoolean("ShowBankroll");
         btnBankroll = config.getString("BtnIcon.Bankroll");
         btnMyState = config.getString("BtnIcon.MyState");
         btnHistory = config.getString("BtnIcon.History");
         btnCashOut = config.getString("BtnIcon.CashOut");
         btnCashOutSetting = config.getString("BtnIcon.CashOutSetting");
+
+        refreshIcons();
     }
 
     public void gameGUISetup() {
-        closeAllGameUI();
+        IBustaMineGui.closeAllGameUI();
         createGameGUI(BustaType.MONEY);
         createGameGUI(BustaType.EXP);
     }
@@ -116,7 +115,7 @@ public class GuiGame implements Listener {
         Inventory inv = new BustaGuiHolder(type, 54, title).getInventory();
 
         // Bankroll
-        if (isShowBankroll) {
+        if (parent.isShowBankroll) {
             ItemStack bankrollBtn = createItemStack(Material.getMaterial(btnBankroll), null,
                     UI_Bankroll.get(), null, 1);
             inv.setItem(45, bankrollBtn);
@@ -159,7 +158,7 @@ public class GuiGame implements Listener {
         }
     }
 
-    public void refreshIcons() {
+    private void refreshIcons() {
         String[] iconIds = new String[]{"Bankroll", "WinChance", "MyState", "History", "CashOut"};
         //45 46 47 48 49
         for (int i = 45; i <= 49; i++) {
@@ -168,7 +167,7 @@ public class GuiGame implements Listener {
 
             ItemMeta meta = oldItem.getItemMeta();
 
-            String material = plugin.ccConfig.get().getString("BtnIcon." + iconIds[i - 45]);
+            String material = plugin.config().getString("BtnIcon." + iconIds[i - 45]);
             ItemStack item = new ItemStack(Material.getMaterial(material));
             item.setItemMeta(meta);
 
@@ -235,14 +234,14 @@ public class GuiGame implements Listener {
                 parent.cashOut(player);
             }
             else if (e.getSlot() == 47) {
-                Game.showPlayerInfo(plugin, player, player);
+                plugin.users().showPlayerInfo(player, player);
             } else if (e.getSlot() < 45) {
                 String str = ChatColor.stripColor(e.getCurrentItem().getItemMeta().getDisplayName());
 
                 if (str.isEmpty()) return;
 
                 Player p = Bukkit.getPlayer(str);
-                if (p != null) Game.showPlayerInfo(plugin, player, p);
+                if (p != null) plugin.users().showPlayerInfo(player, p);
             }
         }
     }

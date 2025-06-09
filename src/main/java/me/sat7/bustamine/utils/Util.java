@@ -1,13 +1,18 @@
 package me.sat7.bustamine.utils;
 
+import de.tr7zw.changeme.nbtapi.NBT;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.text.DecimalFormat;
 import java.util.*;
 
 public class Util {
+    public static final DecimalFormat integerFormat = new DecimalFormat("0");
+    public static final DecimalFormat doubleFormat = new DecimalFormat("0.00");
+
     private static final Random generator = new Random();
     private static final double[] oddList = new double[150];
 
@@ -137,5 +142,20 @@ public class Util {
         }
 
         return result;
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    public static void updateInventory(Player player) {
+        player.updateInventory();
+    }
+
+    private static final String FLAG = "BustaMine_Icon";
+    public static String flag(ItemStack item) {
+        return NBT.get(item, nbt -> nbt.hasTag(FLAG) ? nbt.getString(FLAG) : "");
+    }
+    public static void flag(ItemStack item, String flag) {
+        NBT.modify(item, nbt -> {
+            nbt.setString(FLAG, flag);
+        });
     }
 }

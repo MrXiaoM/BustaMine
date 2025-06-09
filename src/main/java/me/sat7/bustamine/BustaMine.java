@@ -1,5 +1,6 @@
 package me.sat7.bustamine;
 
+import com.google.common.collect.Lists;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import me.sat7.bustamine.commands.CommandMain;
 import me.sat7.bustamine.config.Messages;
@@ -10,9 +11,11 @@ import me.sat7.bustamine.utils.Util;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,20 +23,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public final class BustaMine extends JavaPlugin {
-
     private static BustaMine plugin;
     public static BustaMine inst() {
         return plugin;
     }
-
-    private Economy econ = null;
-
-    public Economy getEconomy() {
-        return econ;
-    }
-
-    public CustomConfig ccConfig;
-    public CustomConfig ccBank;
 
     public BustaMine() {
         plugin = this;
@@ -62,9 +55,17 @@ public final class BustaMine extends JavaPlugin {
         }
     }
 
+    private Economy econ = null;
+
+    private CustomConfig config;
+    private CustomConfig bank;
     private UserManager userManager;
     private GameManager gameManager;
     private Sounds sounds;
+
+    public Economy getEconomy() {
+        return econ;
+    }
 
     public UserManager users() {
         return userManager;
@@ -78,6 +79,14 @@ public final class BustaMine extends JavaPlugin {
         return sounds;
     }
 
+    public CustomConfig config() {
+        return config;
+    }
+
+    public CustomConfig bank() {
+        return bank;
+    }
+
     @Override
     public void onLoad() {
         MinecraftVersion.replaceLogger(getLogger());
@@ -88,10 +97,6 @@ public final class BustaMine extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        setupVault();
-    }
-
-    private void setupVault() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             log("Disabled due to no Vault dependency found!");
             getServer().getPluginManager().disablePlugin(this);
@@ -100,36 +105,33 @@ public final class BustaMine extends JavaPlugin {
             log("Vault Found");
         }
 
-        setupRSP();
+        setupEconomy(0);
     }
 
-    private int setupRspRetryCount = 0;
-
-    private void setupRSP() {
+    private void setupEconomy(int retriedCount) {
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp != null) {
-            econ = rsp.getProvider();
-
+        Economy economy = rsp == null ? null : rsp.getProvider();
+        if (economy != null) {
+            econ = economy;
             init();
-        } else {
-            if (setupRspRetryCount >= 3) {
-                log("Disabled due to no Vault dependency found!");
-                getServer().getPluginManager().disablePlugin(this);
-                return;
-            }
-
-            setupRspRetryCount++;
-            log("Economy provider not found. Retry... " + setupRspRetryCount + "/3");
-
-            Bukkit.getScheduler().runTaskLater(this, this::setupRSP, 30L);
+            return;
         }
+        if (retriedCount >= 3) {
+            log("Disabled due to no Vault Economy instance found!");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        int next = retriedCount + 1;
+        log("Economy provider not found. Retrying... " + next + "/3");
+
+        Bukkit.getScheduler().runTaskLater(this, () -> setupEconomy(next), 30L);
     }
 
     private void init() {
         Util.init();
-        Game.init();
-        ccConfig = new CustomConfig(this);
-        ccBank = new CustomConfig(this);
+        config = new CustomConfig(this);
+        bank = new CustomConfig(this);
         userManager = new UserManager(this);
         gameManager = new GameManager(this);
         sounds = new Sounds(this);
@@ -149,88 +151,99 @@ public final class BustaMine extends JavaPlugin {
         gameManager.setGameEnable(true);
     }
 
+    @SuppressWarnings("deprecation")
     private void setupConfig() {
-        // 컨픽
-        ccConfig.setup("Config");
-        // 주석
-        ccConfig.get().options().header("Changes will take effect from the next round." +
-                "\nRoundInterval: 3~ (real time second) / Default: 5" +
-                "\nMultiplierMax: 30~150 / Default: 120" +
-                "\nProbabilityOfInstaBust: 0.8~20.0 / Default: 1.0 (%) / The final value may vary depending on the MultiplierMax." +
-                "\n" +
-                "\nCommand.WhenRoundStart: placeholder: n/a" +
-                "\nCommand.WhenPlayerBet: placeholder: {player} {amount}" +
-                "\nCommand.WhenPlayerCashOut: placeholder: {player} {amount} {multiplier} {prize}" +
-                "\nCommand.WhenRoundEnd: placeholder: {multiplier}"
-        );
-        ccConfig.get().addDefault("CurrencySymbol", "$");
-        ccConfig.get().addDefault("RoundInterval", 5);
-        ccConfig.get().addDefault("MultiplierMax", 120);
-        ccConfig.get().addDefault("ProbabilityOfInstaBust", 2.0);
-        ccConfig.get().addDefault("ShowWinChance", true);
-        ccConfig.get().addDefault("ShowBankroll", true);
-        ccConfig.get().addDefault("LoadPlayerSkin", true);
-        ccConfig.get().addDefault("UIForceUpdate", false);
+        config.setup("Config", config -> {
+            String header = "Changes will take effect from the next round." +
+                    "\nRoundInterval: 3~ (real time second) / Default: 5" +
+                    "\nMultiplierMax: 30~150 / Default: 120" +
+                    "\nProbabilityOfInstaBust: 0.8~20.0 / Default: 1.0 (%) / The final value may vary depending on the MultiplierMax." +
+                    "\n" +
+                    "\nCommand.WhenRoundStart: placeholder: n/a" +
+                    "\nCommand.WhenPlayerBet: placeholder: {player} {amount}" +
+                    "\nCommand.WhenPlayerCashOut: placeholder: {player} {amount} {multiplier} {prize}" +
+                    "\nCommand.WhenRoundEnd: placeholder: {multiplier}";
+            try {
+                config.options().setHeader(Lists.newArrayList(header.split("\n")));
+            } catch (Throwable t) {
+                config.options().header(header);
+            }
+            config.addDefault("CurrencySymbol", "$");
+            config.addDefault("RoundInterval", 5);
+            config.addDefault("MultiplierMax", 120);
+            config.addDefault("ProbabilityOfInstaBust", 2.0);
+            config.addDefault("ShowWinChance", true);
+            config.addDefault("ShowBankroll", true);
+            config.addDefault("LoadPlayerSkin", true);
+            config.addDefault("UIForceUpdate", false);
 
-        ccConfig.get().addDefault("Bet.Small", 10);
-        ccConfig.get().addDefault("Bet.Medium", 100);
-        ccConfig.get().addDefault("Bet.Big", 1000);
-        ccConfig.get().addDefault("Bet.Max", 5000);
-        ccConfig.get().addDefault("Bet.ExpSmall", 10);
-        ccConfig.get().addDefault("Bet.ExpMedium", 100);
-        ccConfig.get().addDefault("Bet.ExpBig", 1000);
-        ccConfig.get().addDefault("Bet.ExpMax", 5000);
+            config.addDefault("Bet.Small", 10);
+            config.addDefault("Bet.Medium", 100);
+            config.addDefault("Bet.Big", 1000);
+            config.addDefault("Bet.Max", 5000);
+            config.addDefault("Bet.ExpSmall", 10);
+            config.addDefault("Bet.ExpMedium", 100);
+            config.addDefault("Bet.ExpBig", 1000);
+            config.addDefault("Bet.ExpMax", 5000);
 
-        ccConfig.get().addDefault("Broadcast.Jackpot", 30);
-        ccConfig.get().addDefault("Broadcast.InstaBust", true);
+            config.addDefault("Broadcast.Jackpot", 30);
+            config.addDefault("Broadcast.InstaBust", true);
 
-        ccConfig.get().addDefault("Command.WhenRoundStart", "");
-        ccConfig.get().addDefault("Command.WhenPlayerBet", "");
-        ccConfig.get().addDefault("Command.WhenPlayerCashOut", "");
-        ccConfig.get().addDefault("Command.WhenRoundEnd", "");
+            config.addDefault("Command.WhenRoundStart", "");
+            config.addDefault("Command.WhenPlayerBet", "");
+            config.addDefault("Command.WhenPlayerCashOut", "");
+            config.addDefault("Command.WhenRoundEnd", "");
 
-        ccConfig.get().addDefault("BtnIcon.Bankroll", "DIAMOND");
-        ccConfig.get().addDefault("BtnIcon.WinChance", "PAPER");
-        ccConfig.get().addDefault("BtnIcon.MyState", "PAPER");
-        ccConfig.get().addDefault("BtnIcon.History", "PAPER");
-        ccConfig.get().addDefault("BtnIcon.CashOut", "EMERALD");
-        ccConfig.get().addDefault("BtnIcon.CashOutSetting", "PAPER");
-        ccConfig.get().addDefault("BtnIcon.BetSmall", "GOLD_NUGGET");
-        ccConfig.get().addDefault("BtnIcon.BetMedium", "GOLD_INGOT");
-        ccConfig.get().addDefault("BtnIcon.BetBig", "GOLD_BLOCK");
+            config.addDefault("BtnIcon.Bankroll", "DIAMOND");
+            config.addDefault("BtnIcon.WinChance", "PAPER");
+            config.addDefault("BtnIcon.MyState", "PAPER");
+            config.addDefault("BtnIcon.History", "PAPER");
+            config.addDefault("BtnIcon.CashOut", "EMERALD");
+            config.addDefault("BtnIcon.CashOutSetting", "PAPER");
+            config.addDefault("BtnIcon.BetSmall", "GOLD_NUGGET");
+            config.addDefault("BtnIcon.BetMedium", "GOLD_INGOT");
+            config.addDefault("BtnIcon.BetBig", "GOLD_BLOCK");
 
-        ccConfig.get().options().copyDefaults(true);
-        ccConfig.save();
+            config.options().copyDefaults(true);
+        });
+        config.save();
     }
 
     private void setupBank() {
-        // 컨픽
-        ccBank.setup("Bank");
-        ccBank.get().addDefault("Bankroll.Money", 500000);
-        ccBank.get().addDefault("Bankroll.Exp", 500000);
-        ccBank.get().addDefault("Statistics.Income.Money", 0);
-        ccBank.get().addDefault("Statistics.Expense.Money", 0);
-        ccBank.get().addDefault("Statistics.Income.Exp", 0);
-        ccBank.get().addDefault("Statistics.Expense.Exp", 0);
+        bank.setup("Bank", config -> {
+            config.addDefault("Bankroll.Money", 500000);
+            config.addDefault("Bankroll.Exp", 500000);
+            config.addDefault("Statistics.Income.Money", 0);
+            config.addDefault("Statistics.Expense.Money", 0);
+            config.addDefault("Statistics.Income.Exp", 0);
+            config.addDefault("Statistics.Expense.Exp", 0);
 
-        ccBank.get().options().copyDefaults(true);
-        ccBank.save();
+            config.options().copyDefaults(true);
+        });
+        bank.save();
+    }
+
+    @NotNull
+    @Override
+    public FileConfiguration getConfig() {
+        return config.get();
     }
 
     @Override
     public void reloadConfig() {
-        super.reloadConfig();
-
-        ccConfig.reload();
-        ccBank.reload();
+        config.reload();
+        bank.reload();
         userManager.reload();
         sounds.reload();
         updateConfig();
-        gameManager.gui().refreshIcons();
+    }
+
+    public File resolve(String fileName) {
+        return new File(getDataFolder(), fileName);
     }
 
     public void reloadMessages() {
-        File file = new File(getDataFolder(), "messages.yml");
+        File file = resolve("messages.yml");
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         if (Messages.reload(config)) try {
             config.save(file);
@@ -240,28 +253,23 @@ public final class BustaMine extends JavaPlugin {
     }
 
     public void updateConfig() {
-        if (ccConfig.get().contains("Bankroll")) {
-            ccBank.get().set("Bankroll.Money", ccConfig.get().getDouble("Bankroll"));
-            ccBank.save();
-            ccConfig.get().set("Bankroll", null);
+        if (config.contains("Bankroll")) {
+            bank.set("Bankroll.Money", config.getDouble("Bankroll"));
+            bank.save();
+            config.remove("Bankroll");
         }
 
-        if (ccConfig.get().getInt("MultiplierMax") > 150) ccConfig.get().set("MultiplierMax", 150);
-        if (ccConfig.get().getInt("MultiplierMax") < 30) ccConfig.get().set("MultiplierMax", 30);
+        config.rangeInt("MultiplierMax", 30, 150);
+        config.rangeDouble("ProbabilityOfInstaBust", 0.8, 20.0);
 
-        if (ccConfig.get().getDouble("ProbabilityOfInstaBust") > 20) ccConfig.get().set("ProbabilityOfInstaBust", 20.0);
-        if (ccConfig.get().getDouble("ProbabilityOfInstaBust") < 0.8) ccConfig.get().set("ProbabilityOfInstaBust", 0.8);
-
-        if (ccConfig.get().getInt("RoundInterval") < 3) ccConfig.get().set("RoundInterval", 3);
+        config.rangeInt("RoundInterval", 3, null);
 
         gameManager.reload();
-
-        ccConfig.save();
+        config.save();
     }
 
     @Override
     public void onDisable() {
         log("Disabled");
     }
-
 }

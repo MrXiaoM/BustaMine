@@ -17,7 +17,7 @@ public class Sounds {
     private final Map<String, Sound> sounds = new HashMap<>();
     public Sounds(BustaMine plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), "sounds.yml");
+        this.file = plugin.resolve("sounds.yml");
     }
 
     public void reload() {

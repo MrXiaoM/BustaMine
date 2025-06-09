@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -19,14 +20,24 @@ import java.util.Map;
 import java.util.UUID;
 
 import static me.sat7.bustamine.BustaMine.log;
+import static me.sat7.bustamine.config.Messages.*;
+import static me.sat7.bustamine.utils.Util.*;
 
 public class UserManager implements Listener {
     private final BustaMine plugin;
     private final File file;
     private final Map<UUID, User> users = new HashMap<>();
+    private final Map<String, HashMap<String, Double>> sortedMap = new HashMap<>();
+    private final Map<String, Long> sortedTime = new HashMap<>();
     public UserManager(BustaMine plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), "users.yml");
+        this.file = plugin.resolve("users.yml");
+        sortedMap.put("NetProfit", new HashMap<>());
+        sortedMap.put("NetProfit_Exp", new HashMap<>());
+        sortedMap.put("GamesPlayed", new HashMap<>());
+        sortedTime.put("NetProfit", 0L);
+        sortedTime.put("NetProfit_Exp", 0L);
+        sortedTime.put("GamesPlayed", 0L);
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
@@ -86,5 +97,95 @@ public class UserManager implements Listener {
     public void onJoin(PlayerJoinEvent e) {
         User user = get(e.getPlayer());
         user.setLastJoin(System.currentTimeMillis());
+    }
+
+
+    public void showPlayerInfo(Player to, Player data) {
+        User user = plugin.users().get(data);
+        Message_DivUpper.t(to);
+        to.sendMessage("   §6§l" + data.getName());
+        to.sendMessage("   §3" + NetProfit.get());
+        to.sendMessage("     §3" + plugin.game().getCurrencySymbol() + "  " + doubleFormat.format(user.getNetProfit()));
+        to.sendMessage("     §3Xp " + user.getNetProfitExp());
+
+        if (to == data) {
+            to.sendMessage("   §e" + Bal.get());
+            to.sendMessage("     §e" + plugin.config().getString("CurrencySymbol") + "  " + doubleFormat.format(plugin.getEconomy().getBalance(data)));
+            to.sendMessage("     §eXp " + calcTotalExp(data));
+        }
+
+        to.sendMessage("   §f" + GamesPlayed.get() + ": " + user.getGamesPlayed());
+        Message_DivLower.t(to);
+    }
+
+    public void showStatistics(Player p) {
+        double moneyIn = plugin.bank().getDouble("Statistics.Income.Money");
+        double moneyOut = plugin.bank().getDouble("Statistics.Expense.Money");
+        int expIn = plugin.bank().getInt("Statistics.Income.Exp");
+        int expOut = plugin.bank().getInt("Statistics.Expense.Exp");
+
+        Message_DivUpper.t(p);
+        p.sendMessage("   §3" + Income.get());
+        p.sendMessage("     §3" + plugin.game().getCurrencySymbol() + "  " + doubleFormat.format(moneyIn) + "  Xp " + expIn);
+        p.sendMessage("   §3" + Expense.get());
+        p.sendMessage("     §3" + plugin.game().getCurrencySymbol() + "  " + doubleFormat.format(moneyOut) + "  Xp " + expOut);
+        p.sendMessage("   §e" + NetProfit.get());
+        p.sendMessage("     §e" + plugin.game().getCurrencySymbol() + "  " + doubleFormat.format(moneyIn + moneyOut));
+        p.sendMessage("     §eXp " + (expIn + expOut));
+        Message_DivLower.t(p);
+    }
+
+    public void top(Player p, String type) {
+        if (sortedTime.get(type) + (1000L * 60) < System.currentTimeMillis()) {
+            sortedMap.get(type).clear();
+            for (User user : users()) {
+                double value;
+                switch (type) {
+                    case "NetProfit":
+                        value = user.getNetProfit();
+                        break;
+                    case "NetProfit_Exp":
+                        value = user.getNetProfitExp();
+                        break;
+                    case "GamesPlayed":
+                        value = user.getGamesPlayed();
+                        break;
+                    default:
+                        value = 0;
+                        break;
+                }
+                sortedMap.get(type).put(user.getPlayer().getUniqueId().toString(), value);
+            }
+
+            sortedMap.put(type, sortByValue(sortedMap.get(type)));
+            sortedTime.put(type, System.currentTimeMillis());
+        }
+
+        p.sendMessage("§6§l[§e " + Leaderboard.get() + "/" + type + " §6§l]");
+
+        int i = 0;
+        for (String s : sortedMap.get(type).keySet()) {
+            try {
+                OfflinePlayer of = Bukkit.getServer().getOfflinePlayer(UUID.fromString(s));
+
+                String prefix = "  " + (i + 1) + ". " + of.getName() + "   ";
+                if (type.equals("NetProfit")) {
+                    p.sendMessage(prefix + plugin.game().getCurrencySymbol() + doubleFormat.format(sortedMap.get(type).get(s)));
+                } else if (type.equals("NetProfit_Exp")) {
+                    p.sendMessage(prefix + "Xp" + integerFormat.format(sortedMap.get(type).get(s)));
+                } else {
+                    p.sendMessage(prefix + integerFormat.format(sortedMap.get(type).get(s)));
+                }
+
+                i++;
+                if (i >= 10) break;
+            } catch (Exception e) {
+                msg(p, "Failed to load player data. " + s);
+            }
+        }
+
+        long seconds = (System.currentTimeMillis() - sortedTime.get(type)) / 1000;
+        p.sendMessage("  §7" + Message_LastUpdate.get().replace("{sec}", String.valueOf(seconds)));
+        p.sendMessage("");
     }
 }
