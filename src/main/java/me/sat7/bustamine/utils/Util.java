@@ -64,6 +64,15 @@ public class Util {
         return glass;
     }
 
+    public static ItemStack getPlayerHeadItem() {
+        try {
+            Material m = Material.PLAYER_HEAD;
+            return new ItemStack(m);
+        } catch (Throwable t) {
+            return new ItemStack(Util.getMaterial("SKULL:3", Material.STONE));
+        }
+    }
+
     public static Material getGlass(int dataValue) {
         switch (dataValue) {
             case 0:

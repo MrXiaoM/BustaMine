@@ -40,8 +40,17 @@ public class GameManager {
     protected final List<Integer> history = new ArrayList<>();
     protected final Map<Integer, ItemStack> old = new HashMap<>();
 
+    /**
+     * 玩家当前的游戏类型，金币还是经验
+     */
     final Map<UUID, BustaType> playerMap = new HashMap<>();
+    /**
+     * 玩家下注数量
+     */
     final Map<UUID, Integer> activePlayerMap = new ConcurrentHashMap<>();
+    /**
+     * 玩家头颅物品在菜单上的位置索引
+     */
     final Map<UUID, Integer> headPos = new HashMap<>();
 
     private final GuiGameShared guiGameShared;
@@ -315,14 +324,18 @@ public class GameManager {
         }, 0, gameLoopDelay);
     }
 
-    private void bust(boolean instaBust) {
+    /**
+     * 归零
+     * @param instantBust 是否立即归零
+     */
+    private void bust(boolean instantBust) {
         bState = BustaState.BUSTED;
-        if (instaBust) curNum = 100;
+        if (instantBust) curNum = 100;
 
         runCommandRoundEnd(curNum);
 
         if (!Bukkit.getOnlinePlayers().isEmpty()) {
-            if (instaBust && config.isBroadcastInstaBust.val()) {
+            if (instantBust && config.isBroadcastInstaBust.val()) {
                 Bukkit.getServer().broadcastMessage(prefix() + Message_InstantBust.get());
             }
             if (config.broadcastJackpot.val() * 100 <= curNum) {
@@ -385,19 +398,28 @@ public class GameManager {
         plugin.users().save();
     }
 
+    /**
+     * 下注
+     * @param p 下注的玩家
+     * @param type 下注类型
+     * @param amount 下注数量
+     */
     public void bet(Player p, BustaType type, int amount) {
+        // 要求游戏状态在下注阶段
         if (bState != BustaState.BET) return;
 
-        boolean firstBet = !activePlayerMap.containsKey(p.getUniqueId());
-        int old = 0;
-        if (activePlayerMap.containsKey(p.getUniqueId()))
-            old = activePlayerMap.get(p.getUniqueId());
-
-        if (playerMap.containsKey(p.getUniqueId()) && !playerMap.get(p.getUniqueId()).equals(type)) {
+        // 如果下注的游戏不是玩家当前所在游戏，不进行任何操作
+        if (!type.equals(playerMap.getOrDefault(p.getUniqueId(), null))) {
             return;
         }
 
+        // 是否第一次下注
+        boolean firstBet = !activePlayerMap.containsKey(p.getUniqueId());
+        // 之前已下注数量
+        int old = firstBet ? 0 : activePlayerMap.get(p.getUniqueId());
+
         if (type == BustaType.MONEY) {
+            // 最大数量限制
             if (old + amount > config.betMax.val()) {
                 BettingLimit.t(p);
                 return;
@@ -420,6 +442,7 @@ public class GameManager {
                 p.sendMessage("   §e" + MyBal.get() + ": " + config.currencySymbol + doubleFormat.format(economy.getBalance(p)));
                 Message_DivLower.t(p);
 
+                // 如果是第一次下注，向其它玩家广播 有人加入游戏的通知
                 if (firstBet) {
                     for (UUID uuid : playerMap.keySet()) {
                         if (p.getUniqueId().equals(uuid)) continue;
@@ -437,8 +460,7 @@ public class GameManager {
                 p.sendMessage(MyBal.get() + ": " + config.currencySymbol + doubleFormat.format(plugin.getEconomy().getBalance(p)));
                 return;
             }
-        }
-        else {
+        } else {
             if (old + amount > config.betExpMax.val()) {
                 BettingLimit.t(p);
                 return;
@@ -454,6 +476,7 @@ public class GameManager {
                 p.sendMessage("   §e" + MyBal.get() + ": Xp" + calcTotalExp(p));
                 Message_DivLower.t(p);
 
+                // 如果是第一次下注，向其它玩家广播 有人加入游戏的通知
                 if (firstBet) {
                     for (UUID uuid : playerMap.keySet()) {
                         if (p.getUniqueId().equals(uuid)) continue;
@@ -477,20 +500,18 @@ public class GameManager {
         updateNetProfit(p, type, -amount);
 
         if (firstBet) {
+            // 如果是第一次下注
+            // 设置游戏类型，更新游玩次数，向界面添加头颅图标
             playerMap.put(p.getUniqueId(), type);
 
             User user = plugin.users().get(p);
             user.setGamesPlayed(user.getGamesPlayed() + 1);
 
+            // TODO: 虽然玩家不至于很多，但应该要做一个翻页机制
             if (playerMap.size() < 43) {
-                Material m = Material.PLAYER_HEAD;
-
-                ItemStack skull = new ItemStack(m, 1);
+                int idx = playerMap.size() - 1;
+                ItemStack skull = Util.getPlayerHeadItem();
                 ItemMeta meta = skull.getItemMeta();
-
-                if (config.isLoadPlayerSkin.val()) {
-                    plugin.getScheduler().runAsync(t -> loadAndSetSkin(p, playerMap.size() - 1));
-                }
 
                 if (meta != null) {
                     meta.setDisplayName("§6" + p.getName());
@@ -504,77 +525,77 @@ public class GameManager {
                     skull.setItemMeta(meta);
                 }
                 flag(skull, "show player info:" + p.getName());
-                guiGameShared().setBothIcon(playerMap.size() - 1, skull);
 
-                headPos.put(p.getUniqueId(), playerMap.size() - 1);
-            }
-        } else {
-            try {
-                if (headPos.containsKey(p.getUniqueId())) {
-                    int idx = headPos.get(p.getUniqueId());
-                    ItemStack item = guiGameShared().getMoneyIcon(idx);
-                    ItemMeta meta = item.getItemMeta();
-                    if (meta != null) {
-                        ArrayList<String> lore = new ArrayList<>();
-                        if (type == BustaType.MONEY) {
-                            lore.add(UI_PlayerInfo.get().replace("{amount}", config.currencySymbol.val() + (old + amount)));
-                        } else {
-                            lore.add(UI_PlayerInfo.get().replace("{amount}", "Xp" + (old + amount)));
+                if (config.isLoadPlayerSkin.val()) {
+                    // 更新头颅物品皮肤
+                    plugin.getScheduler().runAsync(t -> {
+                        ItemMeta itemMeta = skull.getItemMeta();
+                        if (itemMeta instanceof SkullMeta) {
+                            try {
+                                SkullMeta skullMeta = (SkullMeta) itemMeta;
+                                skullMeta.setOwningPlayer(p);
+                                skull.setItemMeta(skullMeta);
+                            } catch (Exception e) {
+                                log("Failed to load skull skin of player: " + p.getName());
+                            }
                         }
-                        meta.setLore(lore);
-                        item.setItemMeta(meta);
-                    }
-                    flag(item, "show player info:" + p.getName());
-                    guiGameShared().setBothIcon(idx, item);
+                    });
                 }
-            } catch (Exception e) {
-                log("Failed to update UI. Game/Bet/!firstBet", e);
+
+                guiGameShared().setBothIcon(idx, skull);
+
+                headPos.put(p.getUniqueId(), idx);
             }
+        } else try {
+            // 不是第一次下注，则更新头颅图标的 lore
+            if (headPos.containsKey(p.getUniqueId())) {
+                int idx = headPos.get(p.getUniqueId());
+                List<String> lore = new ArrayList<>();
+                if (type == BustaType.MONEY) {
+                    lore.add(UI_PlayerInfo.get().replace("{amount}", config.currencySymbol.val() + (old + amount)));
+                } else {
+                    lore.add(UI_PlayerInfo.get().replace("{amount}", "Xp" + (old + amount)));
+                }
+                guiGameShared().updateBothIcon(idx, lore);
+            }
+        } catch (Exception e) {
+            log("Failed to update UI. Game/Bet/!firstBet", e);
         }
     }
 
-    private void loadAndSetSkin(Player p, int idx) {
-        ItemStack item = guiGameShared().getMoneyIcon(idx);
-        ItemMeta meta = item.getItemMeta();
-        if (meta instanceof SkullMeta) {
-            try {
-                ((SkullMeta) meta).setOwningPlayer(p);
-            } catch (Exception e) {
-                log("Failed to load player skin");
-            }
-        }
-
-        item.setItemMeta(meta);
-        flag(item, "show player info:" + p.getName());
-        guiGameShared().setBothIcon(idx, item);
-    }
-
+    /**
+     * 抛售
+     * @param p 要进行抛售操作的玩家
+     */
     public void cashOut(Player p) {
-        if (!activePlayerMap.containsKey(p.getUniqueId())) return;
+        // 要求游戏状态不在游戏进行中阶段
         if (bState != BustaState.GAME) return;
 
-        double bet = activePlayerMap.get(p.getUniqueId());
+        // 要求已下注，获取并清空玩家的下注金额
+        Integer bet = activePlayerMap.remove(p.getUniqueId());
+        if (bet == null) return;
+
         double prize = bet * (curNum / 100.0);
 
         runCommandCashOut(p, bet, curNum, prize);
         plugin.sounds().play(p, "CashOut");
 
+        // 进行抛售操作，给予玩家奖励的金币或经验
         Message_DivUpper.t(p);
         p.sendMessage("   §f" + CashedOut.get() + ": x" + doubleFormat.format(curNum / 100.0));
         if (playerMap.get(p.getUniqueId()) == BustaType.MONEY) {
-            p.sendMessage("   §3" + Profit.get() + ": " + config.currencySymbol + doubleFormat.format(prize - bet));
             plugin.getEconomy().depositPlayer(p, prize);
+            p.sendMessage("   §3" + Profit.get() + ": " + config.currencySymbol + doubleFormat.format(prize - bet));
             p.sendMessage("   §e" + MyBal.get() + ": " + config.currencySymbol + doubleFormat.format(plugin.getEconomy().getBalance(p)));
         } else {
-            p.sendMessage("   §3" + Profit.get() + ": Xp" + (int) ((int) prize - bet));
             p.giveExp((int) prize);
+            p.sendMessage("   §3" + Profit.get() + ": Xp" + ((int) prize - bet));
             p.sendMessage("   §e" + MyBal.get() + ": Xp" + calcTotalExp(p));
         }
         Message_DivLower.t(p);
 
-        activePlayerMap.remove(p.getUniqueId());
-
         if (headPos.containsKey(p.getUniqueId())) {
+            // 更新玩家头颅 lore
             ItemStack out = new ItemStack(getGlass(11));
             ItemStack head = guiGameShared().getMoneyIcon(headPos.get(p.getUniqueId()));
             ItemMeta headMeta = head.getItemMeta();
@@ -596,6 +617,7 @@ public class GameManager {
             headPos.remove(p.getUniqueId());
         }
 
+        // 向游戏中所有玩家广播 抛售通知
         for (UUID uuid : playerMap.keySet()) {
             if (p.getUniqueId().equals(uuid)) continue;
             try {
@@ -611,7 +633,13 @@ public class GameManager {
         updateNetProfit(p, playerMap.get(p.getUniqueId()), prize);
     }
 
+    /**
+     * 更新总资金数据
+     * @param type 游戏类型
+     * @param amount 增加数量
+     */
     private void updateBankroll(BustaType type, Number amount) {
+        // 更新当前资金数据
         if (type == BustaType.MONEY) {
             plugin.bank().plusDouble("Bankroll.Money", amount.doubleValue());
         } else {
@@ -619,7 +647,7 @@ public class GameManager {
         }
 
         if (config.isShowBankroll.val()) {
-            ArrayList<String> lore = new ArrayList<>();
+            List<String> lore = new ArrayList<>();
             double bankMoney = plugin.bank().getDouble("Bankroll.Money");
             int bankExp = plugin.bank().getInt("Bankroll.Exp");
             lore.add("§e" + config.currencySymbol + String.format("%.1f", bankMoney / 1000.0) + "K");
@@ -628,6 +656,7 @@ public class GameManager {
             guiGameShared().updateBothIcon(45, lore);
         }
 
+        // 更新统计数据
         if (amount.doubleValue() > 0) {
             if (type == BustaType.MONEY) {
                 plugin.bank().plusDouble("Statistics.Income.Money", amount.doubleValue());
@@ -643,6 +672,12 @@ public class GameManager {
         }
     }
 
+    /**
+     * 更新净利润信息
+     * @param p 玩家
+     * @param type 游戏类型
+     * @param amount 增加数量
+     */
     private void updateNetProfit(Player p, BustaType type, double amount) {
         double old;
         User user = plugin.users().get(p);
