@@ -1,5 +1,6 @@
 package me.sat7.bustamine;
 
+import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import me.sat7.bustamine.commands.CommandMain;
 import me.sat7.bustamine.listeners.OnClick;
 import me.sat7.bustamine.listeners.OnJoinLeave;
@@ -53,6 +54,14 @@ public final class BustaMine extends JavaPlugin implements Listener {
                 console.sendMessage(prefix + s);
             }
         }
+    }
+
+    @Override
+    public void onLoad() {
+        MinecraftVersion.replaceLogger(getLogger());
+        MinecraftVersion.disableUpdateCheck();
+        MinecraftVersion.disableBStats();
+        MinecraftVersion.getVersion();
     }
 
     @Override

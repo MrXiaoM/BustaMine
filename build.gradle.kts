@@ -1,10 +1,12 @@
 plugins {
     java
     `maven-publish`
+    id ("com.gradleup.shadow") version "8.3.0"
 }
 
 group = "me.sat7"
 version = "1.9.2"
+val shadowGroup = "me.sat7.bustamine.libs"
 
 repositories {
     mavenCentral()
@@ -13,12 +15,12 @@ repositories {
     maven("https://jitpack.io/")
 }
 
-@Suppress("VulnerableLibrariesLocal")
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.5-R0.1-SNAPSHOT")
 
     compileOnly("net.milkbowl.vault:VaultAPI:1.7")
 
+    implementation("de.tr7zw:item-nbt-api:2.15.0")
     implementation("org.jetbrains:annotations:24.0.0")
 }
 val targetJavaVersion = 8
@@ -30,6 +32,19 @@ java {
     withSourcesJar()
 }
 tasks {
+    shadowJar {
+        archiveClassifier.set("")
+        mapOf(
+            "org.intellij.lang.annotations" to "annotations.intellij",
+            "org.jetbrains.annotations" to "annotations.jetbrains",
+            "de.tr7zw.changeme.nbtapi" to "nbtapi",
+        ).forEach { (original, target) ->
+            relocate(original, "$shadowGroup.$target")
+        }
+    }
+    build {
+        dependsOn(shadowJar)
+    }
     withType<JavaCompile>().configureEach {
         options.encoding = "UTF-8"
         if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible) {
