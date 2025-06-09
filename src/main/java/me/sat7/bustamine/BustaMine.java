@@ -153,7 +153,7 @@ public final class BustaMine extends JavaPlugin {
     }
 
     private void setupBank() {
-        bank.setup("Bank", config -> {
+        bank.setup("bank", config -> {
             config.addDefault("Bankroll.Money", 500000);
             config.addDefault("Bankroll.Exp", 500000);
             config.addDefault("Statistics.Income.Money", 0);

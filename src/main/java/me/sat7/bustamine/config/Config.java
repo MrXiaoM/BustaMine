@@ -18,6 +18,7 @@ public class Config extends CustomConfig implements Property.IPropertyRegistry {
     public final Property<Integer> roundInterval = property(this, "RoundInterval", 5);
     public final Property<Integer> multiplierMax = property(this, "MultiplierMax", 120);
     public final Property<Double> probabilityOfInstaBust = property(this, "ProbabilityOfInstaBust", 2.0);
+
     public final Property<Boolean> isShowWinChance = property(this, "ShowWinChance", true);
     public final Property<Boolean> isShowBankroll = property(this, "ShowBankroll", true);
     public final Property<Boolean> isLoadPlayerSkin = property(this, "LoadPlayerSkin", true);
@@ -60,7 +61,7 @@ public class Config extends CustomConfig implements Property.IPropertyRegistry {
 
     @SuppressWarnings("deprecation")
     public void setup() {
-        setup("Config", config -> {
+        setup("config", config -> {
             String header = "Changes will take effect from the next round." +
                     "\nRoundInterval: 3~ (real time second) / Default: 5" +
                     "\nMultiplierMax: 30~150 / Default: 120" +
