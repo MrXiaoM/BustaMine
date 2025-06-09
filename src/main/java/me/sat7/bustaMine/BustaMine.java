@@ -4,7 +4,6 @@ import me.sat7.bustaMine.Commands.Command;
 import me.sat7.bustaMine.Events.OnClick;
 import me.sat7.bustaMine.Events.OnJoinLeave;
 import net.milkbowl.vault.economy.Economy;
-import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -15,8 +14,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-import static me.sat7.bustaMine.UpdateChecker.getResourceUrl;
 
 public final class BustaMine extends JavaPlugin implements Listener
 {
@@ -118,41 +115,6 @@ public final class BustaMine extends JavaPlugin implements Listener
         UpdateConfig();
 
         console.sendMessage(consolePrefix + "Enabled! :)");
-
-        // 업데이트 확인
-        new UpdateChecker(this, UpdateChecker.PROJECT_ID).getVersion(version ->
-        {
-            try
-            {
-                if (getDescription().getVersion().equals(version))
-                {
-                    console.sendMessage("§6-------------------------------------------------------");
-                    console.sendMessage(consolePrefix + "Plugin is up to date!");
-                    console.sendMessage("Please rate my plugin if you like it");
-                    console.sendMessage(getResourceUrl());
-                    console.sendMessage("§6-------------------------------------------------------");
-                } else
-                {
-                    console.sendMessage("§6-------------------------------------------------------");
-                    console.sendMessage(consolePrefix + "Plugin outdated!!");
-                    console.sendMessage(getResourceUrl());
-                    console.sendMessage("§6-------------------------------------------------------");
-                }
-            } catch (Exception e)
-            {
-                console.sendMessage(consolePrefix + "Failed to check updated. Try again later.");
-            }
-        });
-
-        // bstats
-        try
-        {
-            int pluginId = 4334;
-            Metrics metrics = new Metrics(this, pluginId);
-        } catch (Exception e)
-        {
-            console.sendMessage(consolePrefix + "Failed to Init bstats : " + e);
-        }
 
         // 게임인벤 생성
         Game.SetupGlass();
