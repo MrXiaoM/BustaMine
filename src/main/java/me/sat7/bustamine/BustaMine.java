@@ -3,14 +3,14 @@ package me.sat7.bustamine;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import me.sat7.bustamine.commands.CommandMain;
 import me.sat7.bustamine.config.Messages;
-import me.sat7.bustamine.listeners.OnClick;
-import me.sat7.bustamine.listeners.OnJoinLeave;
+import me.sat7.bustamine.config.Sounds;
+import me.sat7.bustamine.manager.GameManager;
 import me.sat7.bustamine.manager.UserManager;
+import me.sat7.bustamine.utils.Util;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -18,26 +18,22 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Random;
 
-public final class BustaMine extends JavaPlugin implements Listener {
+public final class BustaMine extends JavaPlugin {
 
-    public static BustaMine plugin;
-    public static String prefix = "";
+    private static BustaMine plugin;
+    public static BustaMine inst() {
+        return plugin;
+    }
 
-    private static Economy econ = null;
+    private Economy econ = null;
 
-    public static Economy getEconomy() {
+    public Economy getEconomy() {
         return econ;
     }
 
-    public static final Random generator = new Random();
-
-    public static CustomConfig ccConfig;
-    public static CustomConfig ccBank;
-    public static CustomConfig ccUser;
-    public static CustomConfig ccLang;
-    public static CustomConfig ccSound;
+    public CustomConfig ccConfig;
+    public CustomConfig ccBank;
 
     public BustaMine() {
         plugin = this;
@@ -67,9 +63,19 @@ public final class BustaMine extends JavaPlugin implements Listener {
     }
 
     private UserManager userManager;
+    private GameManager gameManager;
+    private Sounds sounds;
 
-    public UserManager getUserManager() {
+    public UserManager users() {
         return userManager;
+    }
+
+    public GameManager game() {
+        return gameManager;
+    }
+
+    public Sounds sounds() {
+        return sounds;
     }
 
     @Override
@@ -120,32 +126,27 @@ public final class BustaMine extends JavaPlugin implements Listener {
     }
 
     private void init() {
+        Util.init();
+        Game.init();
         ccConfig = new CustomConfig(this);
         ccBank = new CustomConfig(this);
-        ccSound = new CustomConfig(this);
         userManager = new UserManager(this);
-
-        getServer().getPluginManager().registerEvents(this, this);
-        getServer().getPluginManager().registerEvents(new OnClick(this), this);
-        getServer().getPluginManager().registerEvents(new OnJoinLeave(this), this);
+        gameManager = new GameManager(this);
+        sounds = new Sounds(this);
 
         new CommandMain(this);
 
-        Game.calcOdds();
         setupConfig();
         setupBank();
-        setupSound();
         reloadMessages();
         reloadConfig();
 
         log("Enabled! :)");
 
-        Game.setupGlass();
-        Game.setupSortedMap();
-        Game.gameGUISetup();
+        gameManager.gui().gameGUISetup();
 
-        Game.startGame();
-        Game.gameEnable = true;
+        gameManager.startGame();
+        gameManager.setGameEnable(true);
     }
 
     private void setupConfig() {
@@ -216,19 +217,6 @@ public final class BustaMine extends JavaPlugin implements Listener {
         ccBank.save();
     }
 
-    private void setupSound() {
-        ccSound.setup("Sound");
-        ccSound.get().options().header("Enter 0 to play nothing.\nhttps://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html");
-        //ccSound.get().addDefault("RoundStart","0");
-        ccSound.get().addDefault("Bet", "ENTITY_PAINTING_PLACE");
-        ccSound.get().addDefault("CashOut", "ENTITY_EXPERIENCE_ORB_PICKUP");
-        ccSound.get().addDefault("Bust", "ENTITY_PLAYER_HURT");
-        //ccSound.get().addDefault("RoundEnd","ENTITY_CHICKEN_EGG");
-        ccSound.get().addDefault("Click", "0");
-        ccSound.get().options().copyDefaults(true);
-        ccSound.save();
-    }
-
     @Override
     public void reloadConfig() {
         super.reloadConfig();
@@ -236,9 +224,9 @@ public final class BustaMine extends JavaPlugin implements Listener {
         ccConfig.reload();
         ccBank.reload();
         userManager.reload();
-        ccSound.reload();
+        sounds.reload();
         updateConfig();
-        Game.refreshIcons();
+        gameManager.gui().refreshIcons();
     }
 
     public void reloadMessages() {
@@ -266,10 +254,7 @@ public final class BustaMine extends JavaPlugin implements Listener {
 
         if (ccConfig.get().getInt("RoundInterval") < 3) ccConfig.get().set("RoundInterval", 3);
 
-        Game.maxMulti = ccConfig.get().getInt("MultiplierMax");
-
-        Game.baseInstabust = ccConfig.get().getDouble("ProbabilityOfInstaBust") / 100 - Game.oddList[Game.maxMulti - 1];
-        if (Game.baseInstabust < 0) Game.baseInstabust = 0;
+        gameManager.reload();
 
         ccConfig.save();
     }

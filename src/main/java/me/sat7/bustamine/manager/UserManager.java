@@ -6,23 +6,28 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import static me.sat7.bustamine.BustaMine.log;
 
-public class UserManager {
+public class UserManager implements Listener {
     private final BustaMine plugin;
     private final File file;
     private final Map<UUID, User> users = new HashMap<>();
     public UserManager(BustaMine plugin) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "users.yml");
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     @NotNull
@@ -36,6 +41,10 @@ public class UserManager {
             users.put(uuid, newUser);
             return newUser;
         }
+    }
+
+    public Collection<User> users() {
+        return users.values();
     }
 
     public void reload() {
@@ -71,5 +80,11 @@ public class UserManager {
         } catch (IOException e) {
             log(e);
         }
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent e) {
+        User user = get(e.getPlayer());
+        user.setLastJoin(System.currentTimeMillis());
     }
 }

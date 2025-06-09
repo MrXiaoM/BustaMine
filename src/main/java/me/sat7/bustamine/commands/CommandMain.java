@@ -3,6 +3,7 @@ package me.sat7.bustamine.commands;
 import me.sat7.bustamine.BustaMine;
 import me.sat7.bustamine.CustomConfig;
 import me.sat7.bustamine.Game;
+import me.sat7.bustamine.manager.enums.BustaType;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
@@ -33,9 +34,9 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
         if (args.length == 0) {
             if (player.hasPermission("bm.user.money")) {
-                Game.openGameGUI(player, Game.bustaType.money);
+                plugin.game().gui().openGameGUI(player, BustaType.MONEY);
             } else if (player.hasPermission("bm.user.exp")) {
-                Game.openGameGUI(player, Game.bustaType.exp);
+                plugin.game().gui().openGameGUI(player, BustaType.EXP);
             } else {
                 return Message_NoPermission.t(player);
             }
@@ -64,14 +65,14 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         return Message_NoPermission.t(player);
                     }
 
-                    Game.openGameGUI(player, Game.bustaType.money);
+                    plugin.game().gui().openGameGUI(player, BustaType.MONEY);
                     break;
                 case "exp":
                     if (!player.hasPermission("bm.user.exp")) {
                         return Message_NoPermission.t(player);
                     }
 
-                    Game.openGameGUI(player, Game.bustaType.exp);
+                    plugin.game().gui().openGameGUI(player, BustaType.EXP);
                     break;
                 case "stats":
                     if (!player.hasPermission("bm.user.stats")) {
@@ -81,12 +82,12 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     if (args.length > 1) {
                         Player p = Bukkit.getPlayer(args[1]);
                         if (p != null) {
-                            Game.showPlayerInfo(player, p);
+                            Game.showPlayerInfo(plugin, player, p);
                         } else {
                             Message_PlayerNotExist.t(player);
                         }
                     } else {
-                        Game.showPlayerInfo(player, player);
+                        Game.showPlayerInfo(plugin, player, player);
                     }
                     break;
                 case "top":
@@ -96,12 +97,12 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
                     if (args.length >= 2) {
                         if (args[1].equals("NetProfit") || args[1].equals("NetProfit_Exp") || args[1].equals("GamesPlayed")) {
-                            Game.top(player, args[1]);
+                            Game.top(plugin.users(), player, args[1]);
                         } else {
                             msg(player, "[NetProfit | NetProfit_Exp | GamesPlayed]");
                         }
                     } else {
-                        Game.top(player, "NetProfit");
+                        Game.top(plugin.users(), player, "NetProfit");
                     }
                     break;
                 case "reloadConfig":
@@ -121,9 +122,9 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     plugin.reloadMessages();
                     plugin.updateConfig();
 
-                    Game.gameGUISetup();
-                    Game.startGame();
-                    Game.gameEnable = true;
+                    plugin.game().gui().gameGUISetup();
+                    plugin.game().startGame();
+                    plugin.game().setGameEnable(true);
 
                     msg(player, "Game was terminated by server");
                     Message_Reload_Normal.t(player);
@@ -133,8 +134,8 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         return Message_NoPermission.t(player);
                     }
 
-                    Game.startGame();
-                    Game.gameEnable = true;
+                    plugin.game().startGame();
+                    plugin.game().setGameEnable(true);
                     Message_Start.t(player);
                     break;
                 case "stop":
@@ -142,7 +143,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         return Message_NoPermission.t(player);
                     }
 
-                    Game.gameEnable = false;
+                    plugin.game().setGameEnable(false);
                     Message_Stop.t(player);
                     break;
                 case "test":
@@ -156,7 +157,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
                     ArrayList<Integer> tempList = new ArrayList<>();
                     for (int i = 0; i < 100000; i++) {
-                        tempList.add(Game.genBustNum());
+                        tempList.add(plugin.game().genBustNum());
                     }
 
                     debugResult.get().set("result", tempList);
@@ -169,7 +170,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         return Message_NoPermission.t(player);
                     }
 
-                    Game.showStatistics(player);
+                    Game.showStatistics(plugin, player);
                     break;
             }
         }
