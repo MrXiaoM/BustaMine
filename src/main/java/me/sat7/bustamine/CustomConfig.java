@@ -7,12 +7,16 @@ import java.io.File;
 import java.io.IOException;
 
 public class CustomConfig {
-    private File file; // java의 데이터타입
-    private FileConfiguration customFile; // 버킷의 데이터 타입
+    private final BustaMine plugin;
+    private File file;
+    private FileConfiguration customFile;
+    public CustomConfig(BustaMine plugin) {
+        this.plugin = plugin;
+    }
 
     //Finds or generates the custom config file
     public void setup(String name) {
-        file = new File(BustaMine.plugin.getDataFolder(), name + ".yml");
+        file = new File(plugin.getDataFolder(), name + ".yml");
 
         if (!file.exists()) {
             try {

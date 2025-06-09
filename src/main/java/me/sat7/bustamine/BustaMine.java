@@ -2,15 +2,19 @@ package me.sat7.bustamine;
 
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import me.sat7.bustamine.commands.CommandMain;
+import me.sat7.bustamine.config.Messages;
 import me.sat7.bustamine.listeners.OnClick;
 import me.sat7.bustamine.listeners.OnJoinLeave;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Random;
@@ -44,7 +48,9 @@ public final class BustaMine extends JavaPlugin implements Listener {
     public static void log(String info, Throwable t) {
         CommandSender console = Bukkit.getConsoleSender();
         String prefix = "§6[BustaMine]§f ";
-        console.sendMessage(prefix + info);
+        if (info != null) {
+            console.sendMessage(prefix + info);
+        }
         if (t != null) {
             StringWriter sw = new StringWriter();
             try (PrintWriter pw = new PrintWriter(sw)) {
@@ -104,13 +110,11 @@ public final class BustaMine extends JavaPlugin implements Listener {
     }
 
     private void init() {
-        ccConfig = new CustomConfig();
-        ccBank = new CustomConfig();
-        ccUser = new CustomConfig();
-        ccLang = new CustomConfig();
-        ccSound = new CustomConfig();
+        ccConfig = new CustomConfig(this);
+        ccBank = new CustomConfig(this);
+        ccUser = new CustomConfig(this);
+        ccSound = new CustomConfig(this);
 
-        // 이벤트 등록
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new OnClick(), this);
         getServer().getPluginManager().registerEvents(new OnJoinLeave(), this);
@@ -121,9 +125,9 @@ public final class BustaMine extends JavaPlugin implements Listener {
         setupConfig();
         setupBank();
         setupUser();
-        setupLang();
         setupSound();
-        updateConfig();
+        reloadMessages();
+        reloadConfig();
 
         log("Enabled! :)");
 
@@ -131,7 +135,6 @@ public final class BustaMine extends JavaPlugin implements Listener {
         Game.setupSortedMap();
         Game.gameGUISetup();
 
-        // 첫 게임 시작
         Game.startGame();
         Game.gameEnable = true;
     }
@@ -210,76 +213,6 @@ public final class BustaMine extends JavaPlugin implements Listener {
         ccUser.save();
     }
 
-    private void setupLang() {
-        ccLang.setup("Lang");
-        ccLang.get().addDefault("Message.Prefix", "§6§l[BustaMine]§r ");
-        ccLang.get().addDefault("Message.Instabust", "§4Instabust!");
-        ccLang.get().addDefault("Message.Start", "§fGame started.");
-        ccLang.get().addDefault("Message.Stop", "§fGame will be stopped.");
-        ccLang.get().addDefault("Message.NotEnoughMoney", "§eNot Enough Money.");
-        ccLang.get().addDefault("Message.NotEnoughExp", "§eNot Enough Exp.");
-        ccLang.get().addDefault("Message.DivUpper", "§6╔══════════════╗");
-        ccLang.get().addDefault("Message.DivLower", "§6╚══════════════╝");
-        ccLang.get().addDefault("Message.NoPermission", "§eYou do not have permission to use this command.");
-        ccLang.get().addDefault("Message.Reload2", "§fReloaded.");
-        ccLang.get().addDefault("Message.Reload_FromNextRound", "§fReloaded. Changes will take effect from the next round.");
-        ccLang.get().addDefault("Message.PlayerNotExist", "§fPlayer does not exist.");
-        ccLang.get().addDefault("Message.LastUpdate", "Last update: {sec} seconds ago");
-
-        ccLang.get().addDefault("UI.Title", "§2[ Busta Mine ]");
-        ccLang.get().addDefault("UI.BetBtn", "§6§lBet");
-        ccLang.get().addDefault("UI.CashOut", "§6§lCash Out");
-        ccLang.get().addDefault("UI.History", "§6§lHistory");
-        ccLang.get().addDefault("UI.Bankroll", "§6§lBankroll");
-        ccLang.get().addDefault("UI.PlayerInfo", "§fBet: {amount}");
-        ccLang.get().addDefault("UI.MyState", "§6§lMy State");
-        ccLang.get().addDefault("UI.Click", "§eClick");
-        ccLang.get().addDefault("UI.WinChance", "§6§lWin chance");
-        ccLang.get().addDefault("UI.Close", "§6§lClose");
-        ccLang.get().addDefault("UI.CashOutSetting", "§6§lAuto Cash Out");
-
-        ccLang.get().addDefault("CO.Title", "§2[ Auto Cash Out ]");
-        ccLang.get().addDefault("CO.-10", "§6§l-10");
-        ccLang.get().addDefault("CO.-1", "§6§l-1");
-        ccLang.get().addDefault("CO.-01", "§6§l-0.1");
-        ccLang.get().addDefault("CO.+10", "§6§l+10");
-        ccLang.get().addDefault("CO.+1", "§6§l+1");
-        ccLang.get().addDefault("CO.+01", "§6§l+0.1");
-        ccLang.get().addDefault("CO.x", "§fx");
-        ccLang.get().addDefault("CO.Enabled", "§fEnabled");
-        ccLang.get().addDefault("CO.Disabled", "§fDisabled");
-        ccLang.get().addDefault("CO.OnOff", "§6§lOn/Off");
-        ccLang.get().addDefault("CO.PlayMoneyGame", "§6§lGo to Money Game");
-        ccLang.get().addDefault("CO.PlayExpGame", "§6§lGo to Exp Game");
-
-        ccLang.get().addDefault("Help.BmGo", "/bm go   §eStart game (Auto repeat)");
-        ccLang.get().addDefault("Help.BmStop", "/bm stop   §eThe game will be stopped.");
-        ccLang.get().addDefault("Help.BmStatistics", "/bm statistics   §eShow statistics.");
-        ccLang.get().addDefault("Help.BmReloadConfig", "/bm reloadConfig   §eReload config files.");
-        ccLang.get().addDefault("Help.BmReloadLang", "/bm reloadLang   §eReload Lang.yml");
-        ccLang.get().addDefault("Help.BmReloadLangWarning", "§cWarning! Reload server or '/bm reloadLang' will terminate current round.");
-        ccLang.get().addDefault("Help.BmTest", "/bm test   §eGenerate random bust numbers 100000 times.");
-
-        ccLang.get().addDefault("MyBal", "My Balance");
-        ccLang.get().addDefault("Bal", "Balance");
-        ccLang.get().addDefault("Money", "Money");
-        ccLang.get().addDefault("Exp", "Exp");
-        ccLang.get().addDefault("MaximumMultiplier", "Max");
-        ccLang.get().addDefault("Bet", "Bet");
-        ccLang.get().addDefault("CashedOut", "Cashed Out");
-        ccLang.get().addDefault("Busted", "Busted");
-        ccLang.get().addDefault("Income", "Income");
-        ccLang.get().addDefault("Expense", "Expense");
-        ccLang.get().addDefault("Profit", "Profit");
-        ccLang.get().addDefault("NetProfit", "Net Profit");
-        ccLang.get().addDefault("GamesPlayed", "Games Played");
-        ccLang.get().addDefault("Leaderboard", "Leaderboard");
-        ccLang.get().addDefault("BettingLimit", "§fYou've exceeded betting limit");
-
-        ccLang.get().options().copyDefaults(true);
-        ccLang.save();
-    }
-
     private void setupSound() {
         ccSound.setup("Sound");
         ccSound.get().options().header("Enter 0 to play nothing.\nhttps://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html");
@@ -293,16 +226,34 @@ public final class BustaMine extends JavaPlugin implements Listener {
         ccSound.save();
     }
 
-    public static void updateConfig() {
+    @Override
+    public void reloadConfig() {
+        super.reloadConfig();
+
+        ccConfig.reload();
+        ccBank.reload();
+        ccUser.reload();
+        ccSound.reload();
+        updateConfig();
+        Game.refreshIcons();
+    }
+
+    public void reloadMessages() {
+        File file = new File(getDataFolder(), "messages.yml");
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+        if (Messages.reload(config)) try {
+            config.save(file);
+        } catch (IOException e) {
+            log(null, e);
+        }
+    }
+
+    public void updateConfig() {
         if (ccConfig.get().contains("Bankroll")) {
             ccBank.get().set("Bankroll.Money", ccConfig.get().getDouble("Bankroll"));
             ccBank.save();
             ccConfig.get().set("Bankroll", null);
         }
-
-        //--------------------------------
-
-        prefix = ccLang.get().getString("Message.Prefix");
 
         if (ccConfig.get().getInt("MultiplierMax") > 150) ccConfig.get().set("MultiplierMax", 150);
         if (ccConfig.get().getInt("MultiplierMax") < 30) ccConfig.get().set("MultiplierMax", 30);
@@ -316,7 +267,6 @@ public final class BustaMine extends JavaPlugin implements Listener {
 
         Game.baseInstabust = ccConfig.get().getDouble("ProbabilityOfInstaBust") / 100 - Game.oddList[Game.maxMulti - 1];
         if (Game.baseInstabust < 0) Game.baseInstabust = 0;
-        //System.out.println("base:"+Game.baseInstabust);
 
         ccConfig.save();
     }

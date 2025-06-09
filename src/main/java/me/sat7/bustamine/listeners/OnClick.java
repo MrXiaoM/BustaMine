@@ -11,6 +11,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 
+import static me.sat7.bustamine.config.Messages.Message_NoPermission;
+
 public class OnClick implements Listener {
 
     @EventHandler
@@ -74,13 +76,13 @@ public class OnClick implements Listener {
                     if (player.hasPermission("bm.user.money")) {
                         Game.openGameGUI(player, Game.bustaType.money);
                     } else {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
+                        Message_NoPermission.t(player);
                     }
                 } else if (e.getSlot() == 26) {
                     if (player.hasPermission("bm.user.exp")) {
                         Game.openGameGUI(player, Game.bustaType.exp);
                     } else {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
+                        Message_NoPermission.t(player);
                     }
                 }
                 else if (e.getSlot() >= 10 || e.getSlot() <= 16) {

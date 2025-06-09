@@ -11,9 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommandMain implements CommandExecutor, TabCompleter {
-    private BustaMine plugin;
+import static me.sat7.bustamine.config.Messages.*;
 
+public class CommandMain implements CommandExecutor, TabCompleter {
+    private final BustaMine plugin;
     public CommandMain(BustaMine plugin) {
         this.plugin = plugin;
         PluginCommand command = plugin.getCommand("BustaMine");
@@ -25,11 +26,9 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-
         if (!(sender instanceof Player)) {
             return true;
         }
-
         Player player = (Player) sender;
 
         if (args.length == 0) {
@@ -38,8 +37,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
             } else if (player.hasPermission("bm.user.exp")) {
                 Game.openGameGUI(player, Game.bustaType.exp);
             } else {
-                player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                return true;
+                return Message_NoPermission.t(player);
             }
         }
 
@@ -47,40 +45,37 @@ public class CommandMain implements CommandExecutor, TabCompleter {
             switch (args[0]) {
                 case "help":
                 case "?":
-                    player.sendMessage(BustaMine.prefix + "Help");
+                    player.sendMessage(prefix() + "Help");
                     player.sendMessage("/bm [money | exp]");
                     player.sendMessage("/bm stats [player]");
                     player.sendMessage("/bm top [NetProfit | NetProfit_Exp | GamesPlayed]");
                     if (player.hasPermission("bm.admin")) {
-                        player.sendMessage(BustaMine.ccLang.get().getString("Help.BmGo"));
-                        player.sendMessage(BustaMine.ccLang.get().getString("Help.BmStop"));
-                        player.sendMessage(BustaMine.ccLang.get().getString("Help.BmStatistics"));
-                        player.sendMessage(BustaMine.ccLang.get().getString("Help.BmTest"));
-                        player.sendMessage(BustaMine.ccLang.get().getString("Help.BmReloadConfig"));
-                        player.sendMessage(BustaMine.ccLang.get().getString("Help.BmReloadLang"));
-                        player.sendMessage(BustaMine.ccLang.get().getString("Help.BmReloadLangWarning"));
+                        Help_BmGo.t(player);
+                        Help_BmStop.t(player);
+                        Help_BmStatistics.t(player);
+                        Help_BmTest.t(player);
+                        Help_BmReloadConfig.t(player);
+                        Help_BmReloadLang.t(player);
+                        Help_BmReloadLangWarning.t(player);
                     }
                     break;
                 case "money":
                     if (!player.hasPermission("bm.user.money")) {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                        return true;
+                        return Message_NoPermission.t(player);
                     }
 
                     Game.openGameGUI(player, Game.bustaType.money);
                     break;
                 case "exp":
                     if (!player.hasPermission("bm.user.exp")) {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                        return true;
+                        return Message_NoPermission.t(player);
                     }
 
                     Game.openGameGUI(player, Game.bustaType.exp);
                     break;
                 case "stats":
                     if (!player.hasPermission("bm.user.stats")) {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                        return true;
+                        return Message_NoPermission.t(player);
                     }
 
                     if (args.length > 1) {
@@ -88,7 +83,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                         if (p != null) {
                             Game.showPlayerInfo(player, p);
                         } else {
-                            player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.PlayerNotExist"));
+                            Message_PlayerNotExist.t(player);
                         }
                     } else {
                         Game.showPlayerInfo(player, player);
@@ -96,15 +91,14 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     break;
                 case "top":
                     if (!player.hasPermission("bm.user.top")) {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                        return true;
+                        return Message_NoPermission.t(player);
                     }
 
                     if (args.length >= 2) {
                         if (args[1].equals("NetProfit") || args[1].equals("NetProfit_Exp") || args[1].equals("GamesPlayed")) {
                             Game.top(player, args[1]);
                         } else {
-                            player.sendMessage(BustaMine.prefix + "[NetProfit | NetProfit_Exp | GamesPlayed]");
+                            msg(player, "[NetProfit | NetProfit_Exp | GamesPlayed]");
                         }
                     } else {
                         Game.top(player, "NetProfit");
@@ -112,61 +106,51 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     break;
                 case "reloadConfig":
                     if (!player.hasPermission("bm.admin")) {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                        return true;
+                        return Message_NoPermission.t(player);
                     }
 
-                    BustaMine.ccConfig.reload();
-                    BustaMine.ccBank.reload();
-                    BustaMine.ccUser.reload();
-                    BustaMine.ccSound.reload();
-                    BustaMine.updateConfig();
-                    Game.refreshIcons();
+                    plugin.reloadConfig();
 
-                    player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.Reload_FromNextRound"));
+                    Message_Reload_FromNextRound.t(player);
                     break;
                 case "reloadLang":
                     if (!player.hasPermission("bm.admin")) {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                        return true;
+                        return Message_NoPermission.t(player);
                     }
 
-                    BustaMine.ccLang.reload();
-                    BustaMine.updateConfig();
+                    plugin.reloadMessages();
+                    plugin.updateConfig();
 
                     Game.gameGUISetup();
                     Game.startGame();
                     Game.gameEnable = true;
 
-                    player.sendMessage(BustaMine.prefix + "Game was terminated by server");
-                    player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.Reload2"));
+                    msg(player, "Game was terminated by server");
+                    Message_Reload_Normal.t(player);
                     break;
                 case "go":
                     if (!player.hasPermission("bm.admin")) {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                        return true;
+                        return Message_NoPermission.t(player);
                     }
 
                     Game.startGame();
                     Game.gameEnable = true;
-                    player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.Start"));
+                    Message_Start.t(player);
                     break;
                 case "stop":
                     if (!player.hasPermission("bm.admin")) {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                        return true;
+                        return Message_NoPermission.t(player);
                     }
 
                     Game.gameEnable = false;
-                    player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.Stop"));
+                    Message_Stop.t(player);
                     break;
                 case "test":
                     if (!player.hasPermission("bm.admin")) {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                        return true;
+                        return Message_NoPermission.t(player);
                     }
 
-                    CustomConfig debugResult = new CustomConfig();
+                    CustomConfig debugResult = new CustomConfig(plugin);
                     String name = "TestResult_" + System.currentTimeMillis();
                     debugResult.setup(name);
 
@@ -178,12 +162,11 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     debugResult.get().set("result", tempList);
                     debugResult.save();
 
-                    player.sendMessage(BustaMine.prefix + "File generated. plugins/BustaMine/" + name + ".yml");
+                    msg(player, "File generated. plugins/BustaMine/" + name + ".yml");
                     break;
                 case "statistics":
                     if (!player.hasPermission("bm.admin")) {
-                        player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
-                        return true;
+                        return Message_NoPermission.t(player);
                     }
 
                     Game.showStatistics(player);
