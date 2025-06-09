@@ -321,11 +321,13 @@ public class GameManager {
 
         runCommandRoundEnd(curNum);
 
-        if (instaBust && config.isBroadcastInstaBust.val()) {
-            Bukkit.getServer().broadcastMessage(prefix() + Message_Instabust.get());
-        }
-        if (config.broadcastJackpot.val() * 100 <= curNum) {
-            Bukkit.getServer().broadcastMessage(prefix() + "§a§lBusted! : x" + doubleFormat.format(curNum / 100.0));
+        if (!Bukkit.getOnlinePlayers().isEmpty()) {
+            if (instaBust && config.isBroadcastInstaBust.val()) {
+                Bukkit.getServer().broadcastMessage(prefix() + Message_InstantBust.get());
+            }
+            if (config.broadcastJackpot.val() * 100 <= curNum) {
+                Bukkit.getServer().broadcastMessage(prefix() + "§a§lBusted! : x" + doubleFormat.format(curNum / 100.0));
+            }
         }
 
         for (UUID uuid : playerMap.keySet()) {
