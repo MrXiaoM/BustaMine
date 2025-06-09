@@ -1,32 +1,27 @@
 package me.sat7.bustaMine;
 
-import me.sat7.bustaMine.Commands.Command;
+import me.sat7.bustaMine.Commands.CommandMain;
 import me.sat7.bustaMine.Events.OnClick;
 import me.sat7.bustaMine.Events.OnJoinLeave;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
-public final class BustaMine extends JavaPlugin implements Listener
-{
+public final class BustaMine extends JavaPlugin implements Listener {
 
     public static BustaMine plugin;
     public static ConsoleCommandSender console;
     public static final String consolePrefix = "§6[BustaMine]§f ";
     public static String prefix = "";
 
-    private static Economy econ = null; // 볼트에 물려있는 이코노미
+    private static Economy econ = null;
 
-    public static Economy getEconomy()
-    {
+    public static Economy getEconomy() {
         return econ;
     }
 
@@ -39,44 +34,35 @@ public final class BustaMine extends JavaPlugin implements Listener
     public static CustomConfig ccSound;
 
     @Override
-    public void onEnable()
-    {
+    public void onEnable() {
         plugin = this;
         console = plugin.getServer().getConsoleSender();
 
-        SetupVault();
+        setupVault();
     }
 
-    private void SetupVault()
-    {
-        if (getServer().getPluginManager().getPlugin("Vault") == null)
-        {
+    private void setupVault() {
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
             console.sendMessage(consolePrefix + " Disabled due to no Vault dependency found!");
             getServer().getPluginManager().disablePlugin(this);
             return;
-        }
-        else
-        {
+        } else {
             console.sendMessage(consolePrefix + " Vault Found");
         }
 
-        SetupRSP();
+        setupRSP();
     }
 
     private int setupRspRetryCount = 0;
-    private void SetupRSP()
-    {
+
+    private void setupRSP() {
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp != null)
-        {
+        if (rsp != null) {
             econ = rsp.getProvider();
 
-            Init();
-        }
-        else
-        {
-            if(setupRspRetryCount >= 3)
-            {
+            init();
+        } else {
+            if (setupRspRetryCount >= 3) {
                 console.sendMessage(consolePrefix + " Disabled due to no Vault dependency found!");
                 getServer().getPluginManager().disablePlugin(this);
                 return;
@@ -85,12 +71,11 @@ public final class BustaMine extends JavaPlugin implements Listener
             setupRspRetryCount++;
             console.sendMessage(consolePrefix + " Economy provider not found. Retry... " + setupRspRetryCount + "/3");
 
-            Bukkit.getScheduler().runTaskLater(this, this::SetupRSP, 30L);
+            Bukkit.getScheduler().runTaskLater(this, this::setupRSP, 30L);
         }
     }
 
-    private void Init()
-    {
+    private void init() {
         ccConfig = new CustomConfig();
         ccBank = new CustomConfig();
         ccUser = new CustomConfig();
@@ -102,21 +87,18 @@ public final class BustaMine extends JavaPlugin implements Listener
         getServer().getPluginManager().registerEvents(new OnClick(), this);
         getServer().getPluginManager().registerEvents(new OnJoinLeave(), this);
 
-        // 명령어 등록 (개별 클레스로 되어있는것들)
-        getCommand("BustaMine").setExecutor(new Command());
-        getCommand("BustaMine").setTabCompleter(this);
+        new CommandMain(this);
 
-        Game.CalcOdds(); // 이건 컨픽보다 먼저 계산해둬야함.
-        SetupConfig();
-        SetupBank();
-        SetupUser();
-        SetupLang();
-        SetupSound();
-        UpdateConfig();
+        Game.CalcOdds();
+        setupConfig();
+        setupBank();
+        setupUser();
+        setupLang();
+        setupSound();
+        updateConfig();
 
         console.sendMessage(consolePrefix + "Enabled! :)");
 
-        // 게임인벤 생성
         Game.SetupGlass();
         Game.SetupSortedMap();
         Game.GameUISetup();
@@ -126,8 +108,7 @@ public final class BustaMine extends JavaPlugin implements Listener
         Game.gameEnable = true;
     }
 
-    private void SetupConfig()
-    {
+    private void setupConfig() {
         // 컨픽
         ccConfig.setup("Config");
         // 주석
@@ -181,8 +162,7 @@ public final class BustaMine extends JavaPlugin implements Listener
         ccConfig.save();
     }
 
-    private void SetupBank()
-    {
+    private void setupBank() {
         // 컨픽
         ccBank.setup("Bank");
         ccBank.get().addDefault("Bankroll.Money", 500000);
@@ -196,15 +176,13 @@ public final class BustaMine extends JavaPlugin implements Listener
         ccBank.save();
     }
 
-    private void SetupUser()
-    {
+    private void setupUser() {
         ccUser.setup("User");
         ccUser.get().options().copyDefaults(true);
         ccUser.save();
     }
 
-    private void SetupLang()
-    {
+    private void setupLang() {
         ccLang.setup("Lang");
         ccLang.get().addDefault("Message.Prefix", "§6§l[BustaMine]§r ");
         ccLang.get().addDefault("Message.Instabust", "§4Instabust!");
@@ -274,8 +252,7 @@ public final class BustaMine extends JavaPlugin implements Listener
         ccLang.save();
     }
 
-    private void SetupSound()
-    {
+    private void setupSound() {
         ccSound.setup("Sound");
         ccSound.get().options().header("Enter 0 to play nothing.\nhttps://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html");
         //ccSound.get().addDefault("RoundStart","0");
@@ -288,10 +265,8 @@ public final class BustaMine extends JavaPlugin implements Listener
         ccSound.save();
     }
 
-    public static void UpdateConfig()
-    {
-        if (ccConfig.get().contains("Bankroll"))
-        {
+    public static void updateConfig() {
+        if (ccConfig.get().contains("Bankroll")) {
             ccBank.get().set("Bankroll.Money", ccConfig.get().getDouble("Bankroll"));
             ccBank.save();
             ccConfig.get().set("Bankroll", null);
@@ -319,84 +294,8 @@ public final class BustaMine extends JavaPlugin implements Listener
     }
 
     @Override
-    public void onDisable()
-    {
+    public void onDisable() {
         console.sendMessage(consolePrefix + "Disabled");
     }
 
-    @Override
-    public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command command, String alias, String[] args)
-    {
-
-        if (args.length == 1)
-        {
-            ArrayList<String> temp = new ArrayList<>();
-            ArrayList<String> alist = new ArrayList<>();
-
-            temp.add("help");
-
-            if (sender.hasPermission("bm.admin"))
-            {
-                temp.add("go");
-                temp.add("stop");
-                temp.add("statistics");
-                temp.add("reloadConfig");
-                temp.add("reloadLang");
-                temp.add("test");
-            }
-            if (sender.hasPermission("bm.user.money") || sender.hasPermission("bm.user.exp"))
-            {
-                temp.add("money");
-                temp.add("exp");
-                temp.add("stats");
-                temp.add("top");
-            }
-
-            for (String s : temp)
-            {
-                if (s.startsWith(args[0])) alist.add(s);
-            }
-
-            return alist;
-        } else if (args.length > 1)
-        {
-            ArrayList<String> temp = new ArrayList<>();
-            ArrayList<String> alist = new ArrayList<>();
-
-            if (args[0].equals("top") && (sender.hasPermission("bm.user.money") || sender.hasPermission("bm.user.exp")))
-            {
-                temp.add("NetProfit");
-                temp.add("NetProfit_Exp");
-                temp.add("GamesPlayed");
-            }
-
-            for (String s : temp)
-            {
-                if (s.startsWith(args[1])) alist.add(s);
-            }
-
-            return alist;
-        }
-
-        return null;
-    }
-
-    // 볼트 이코노미 초기화
-    private boolean setupEconomy()
-    {
-        if (getServer().getPluginManager().getPlugin("Vault") == null)
-        {
-            console.sendMessage(consolePrefix + " Vault Not Found");
-            return false;
-        }
-        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp == null)
-        {
-            console.sendMessage(consolePrefix + "RSP is null!");
-            return false;
-        }
-        econ = rsp.getProvider();
-        console.sendMessage(consolePrefix + "Vault Found");
-        return econ != null;
-    }
 }

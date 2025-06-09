@@ -4,66 +4,53 @@ import me.sat7.bustaMine.BustaMine;
 import me.sat7.bustaMine.CustomConfig;
 import me.sat7.bustaMine.Game;
 import org.bukkit.Bukkit;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class Command implements CommandExecutor {
+public class CommandMain implements CommandExecutor, TabCompleter {
+    private BustaMine plugin;
 
-    public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
-        List<Map.Entry<K, V>> list = new ArrayList<>(map.entrySet());
-        list.sort(Map.Entry.comparingByValue());
-        Collections.reverse(list);
-
-        Map<K, V> result = new LinkedHashMap<>();
-        for (Map.Entry<K, V> entry : list) {
-            result.put(entry.getKey(), entry.getValue());
+    public CommandMain(BustaMine plugin) {
+        this.plugin = plugin;
+        PluginCommand command = plugin.getCommand("BustaMine");
+        if (command != null) {
+            command.setExecutor(this);
+            command.setTabCompleter(this);
         }
-
-        return result;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
 
-        if(!(sender instanceof Player))
-        {
+        if (!(sender instanceof Player)) {
             return true;
         }
 
-        Player player = (Player)sender;
+        Player player = (Player) sender;
 
-        if(args.length == 0)
-        {
-            if(player.hasPermission("bm.user.money"))
-            {
+        if (args.length == 0) {
+            if (player.hasPermission("bm.user.money")) {
                 Game.OpenGameInven(player, Game.bustaType.money);
-            }
-            else if(player.hasPermission("bm.user.exp"))
-            {
+            } else if (player.hasPermission("bm.user.exp")) {
                 Game.OpenGameInven(player, Game.bustaType.exp);
-            }
-            else
-            {
-                player.sendMessage(BustaMine.prefix+BustaMine.ccLang.get().getString("Message.NoPermission"));
+            } else {
+                player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                 return true;
             }
         }
 
-        if (args.length >= 1)
-        {
-            switch (args[0])
-            {
+        if (args.length >= 1) {
+            switch (args[0]) {
                 case "help":
                 case "?":
                     player.sendMessage(BustaMine.prefix + "Help");
                     player.sendMessage("/bm [money | exp]");
                     player.sendMessage("/bm stats [player]");
                     player.sendMessage("/bm top [NetProfit | NetProfit_Exp | GamesPlayed]");
-                    if (player.hasPermission("bm.admin"))
-                    {
+                    if (player.hasPermission("bm.admin")) {
                         player.sendMessage(BustaMine.ccLang.get().getString("Help.BmGo"));
                         player.sendMessage(BustaMine.ccLang.get().getString("Help.BmStop"));
                         player.sendMessage(BustaMine.ccLang.get().getString("Help.BmStatistics"));
@@ -74,8 +61,7 @@ public class Command implements CommandExecutor {
                     }
                     break;
                 case "money":
-                    if (!player.hasPermission("bm.user.money"))
-                    {
+                    if (!player.hasPermission("bm.user.money")) {
                         player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                         return true;
                     }
@@ -83,8 +69,7 @@ public class Command implements CommandExecutor {
                     Game.OpenGameInven(player, Game.bustaType.money);
                     break;
                 case "exp":
-                    if (!player.hasPermission("bm.user.exp"))
-                    {
+                    if (!player.hasPermission("bm.user.exp")) {
                         player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                         return true;
                     }
@@ -92,51 +77,40 @@ public class Command implements CommandExecutor {
                     Game.OpenGameInven(player, Game.bustaType.exp);
                     break;
                 case "stats":
-                    if (!player.hasPermission("bm.user.stats"))
-                    {
+                    if (!player.hasPermission("bm.user.stats")) {
                         player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                         return true;
                     }
 
-                    if (args.length > 1)
-                    {
+                    if (args.length > 1) {
                         Player p = Bukkit.getPlayer(args[1]);
-                        if (p != null)
-                        {
+                        if (p != null) {
                             Game.ShowPlayerInfo(player, p);
-                        } else
-                        {
+                        } else {
                             player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.PlayerNotExist"));
                         }
-                    } else
-                    {
+                    } else {
                         Game.ShowPlayerInfo(player, player);
                     }
                     break;
                 case "top":
-                    if (!player.hasPermission("bm.user.top"))
-                    {
+                    if (!player.hasPermission("bm.user.top")) {
                         player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                         return true;
                     }
 
-                    if (args.length >= 2)
-                    {
-                        if (args[1].equals("NetProfit") || args[1].equals("NetProfit_Exp") || args[1].equals("GamesPlayed"))
-                        {
+                    if (args.length >= 2) {
+                        if (args[1].equals("NetProfit") || args[1].equals("NetProfit_Exp") || args[1].equals("GamesPlayed")) {
                             Game.Top(player, args[1]);
-                        } else
-                        {
+                        } else {
                             player.sendMessage(BustaMine.prefix + "[NetProfit | NetProfit_Exp | GamesPlayed]");
                         }
-                    } else
-                    {
+                    } else {
                         Game.Top(player, "NetProfit");
                     }
                     break;
                 case "reloadConfig":
-                    if (!player.hasPermission("bm.admin"))
-                    {
+                    if (!player.hasPermission("bm.admin")) {
                         player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                         return true;
                     }
@@ -145,20 +119,19 @@ public class Command implements CommandExecutor {
                     BustaMine.ccBank.reload();
                     BustaMine.ccUser.reload();
                     BustaMine.ccSound.reload();
-                    BustaMine.UpdateConfig();
+                    BustaMine.updateConfig();
                     Game.RefreshIcons();
 
                     player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.Reload_FromNextRound"));
                     break;
                 case "reloadLang":
-                    if (!player.hasPermission("bm.admin"))
-                    {
+                    if (!player.hasPermission("bm.admin")) {
                         player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                         return true;
                     }
 
                     BustaMine.ccLang.reload();
-                    BustaMine.UpdateConfig();
+                    BustaMine.updateConfig();
 
                     Game.GameUISetup();
                     Game.StartGame();
@@ -168,8 +141,7 @@ public class Command implements CommandExecutor {
                     player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.Reload2"));
                     break;
                 case "go":
-                    if (!player.hasPermission("bm.admin"))
-                    {
+                    if (!player.hasPermission("bm.admin")) {
                         player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                         return true;
                     }
@@ -179,8 +151,7 @@ public class Command implements CommandExecutor {
                     player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.Start"));
                     break;
                 case "stop":
-                    if (!player.hasPermission("bm.admin"))
-                    {
+                    if (!player.hasPermission("bm.admin")) {
                         player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                         return true;
                     }
@@ -189,8 +160,7 @@ public class Command implements CommandExecutor {
                     player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.Stop"));
                     break;
                 case "test":
-                    if (!player.hasPermission("bm.admin"))
-                    {
+                    if (!player.hasPermission("bm.admin")) {
                         player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                         return true;
                     }
@@ -200,8 +170,7 @@ public class Command implements CommandExecutor {
                     debugResult.setup(name);
 
                     ArrayList<Integer> tempList = new ArrayList<>();
-                    for (int i = 0; i < 100000; i++)
-                    {
+                    for (int i = 0; i < 100000; i++) {
                         tempList.add(Game.GenBustNum());
                     }
 
@@ -211,8 +180,7 @@ public class Command implements CommandExecutor {
                     player.sendMessage(BustaMine.prefix + "File generated. plugins/BustaMine/" + name + ".yml");
                     break;
                 case "statistics":
-                    if (!player.hasPermission("bm.admin"))
-                    {
+                    if (!player.hasPermission("bm.admin")) {
                         player.sendMessage(BustaMine.prefix + BustaMine.ccLang.get().getString("Message.NoPermission"));
                         return true;
                     }
@@ -223,5 +191,49 @@ public class Command implements CommandExecutor {
         }
 
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
+        if (args.length == 1) {
+            ArrayList<String> temp = new ArrayList<>();
+            ArrayList<String> list = new ArrayList<>();
+
+            temp.add("help");
+
+            if (sender.hasPermission("bm.admin")) {
+                temp.add("go");
+                temp.add("stop");
+                temp.add("statistics");
+                temp.add("reloadConfig");
+                temp.add("reloadLang");
+                temp.add("test");
+            }
+            if (sender.hasPermission("bm.user.money") || sender.hasPermission("bm.user.exp")) {
+                temp.add("money");
+                temp.add("exp");
+                temp.add("stats");
+                temp.add("top");
+            }
+
+            for (String s : temp) {
+                if (s.startsWith(args[0])) list.add(s);
+            }
+
+            return list;
+        } else if (args.length > 1) {
+            ArrayList<String> temp = new ArrayList<>();
+            ArrayList<String> list = new ArrayList<>();
+            if (args[0].equals("top") && (sender.hasPermission("bm.user.money") || sender.hasPermission("bm.user.exp"))) {
+                temp.add("NetProfit");
+                temp.add("NetProfit_Exp");
+                temp.add("GamesPlayed");
+            }
+            for (String s : temp) {
+                if (s.startsWith(args[1])) list.add(s);
+            }
+            return list;
+        }
+        return null;
     }
 }
