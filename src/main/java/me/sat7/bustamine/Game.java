@@ -16,6 +16,8 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static me.sat7.bustamine.BustaMine.log;
+
 public class Game {
     private static BukkitTask bustaTask;
 
@@ -620,8 +622,7 @@ public class Game {
                     gameInven_exp.setItem(idx, tempIS);
                 }
             } catch (Exception e) {
-                BustaMine.console.sendMessage(BustaMine.consolePrefix + "Failed to update UI. Game/Bet/!firstBet");
-                BustaMine.console.sendMessage(BustaMine.consolePrefix + e);
+                log("Failed to update UI. Game/Bet/!firstBet", e);
             }
         }
     }
@@ -632,7 +633,7 @@ public class Game {
         try {
             meta.setOwningPlayer(p);
         } catch (Exception e) {
-            BustaMine.console.sendMessage(BustaMine.prefix + "Failed to load player skin");
+            log("Failed to load player skin");
         }
 
         tempIs.setItemMeta(meta);
@@ -786,10 +787,10 @@ public class Game {
         } catch (Exception e) {
             if (BustaMine.ccSound.get().contains(key)) {
                 if (BustaMine.ccSound.get().getString(key).length() > 1) {
-                    BustaMine.console.sendMessage(BustaMine.consolePrefix + " Sound play failed: " + key + "/" + BustaMine.ccSound.get().getString(key));
+                    log("Sound play failed: " + key + "/" + BustaMine.ccSound.get().getString(key));
                 }
             } else {
-                BustaMine.console.sendMessage(BustaMine.consolePrefix + " Sound play failed. Path is missing: " + key);
+                log(" Sound play failed. Path is missing: " + key);
             }
         }
     }

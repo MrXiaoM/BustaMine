@@ -5,18 +5,18 @@ import me.sat7.bustamine.listeners.OnClick;
 import me.sat7.bustamine.listeners.OnJoinLeave;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
-import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Random;
 
 public final class BustaMine extends JavaPlugin implements Listener {
 
     public static BustaMine plugin;
-    public static ConsoleCommandSender console;
-    public static final String consolePrefix = "§6[BustaMine]§f ";
     public static String prefix = "";
 
     private static Economy econ = null;
@@ -33,21 +33,40 @@ public final class BustaMine extends JavaPlugin implements Listener {
     public static CustomConfig ccLang;
     public static CustomConfig ccSound;
 
+    public BustaMine() {
+        plugin = this;
+    }
+
+    public static void log(String info) {
+        log(info, null);
+    }
+    public static void log(String info, Throwable t) {
+        CommandSender console = Bukkit.getConsoleSender();
+        String prefix = "§6[BustaMine]§f ";
+        console.sendMessage(prefix + info);
+        if (t != null) {
+            StringWriter sw = new StringWriter();
+            try (PrintWriter pw = new PrintWriter(sw)) {
+                t.printStackTrace(pw);
+            }
+            for (String s : sw.toString().split("\n")) {
+                console.sendMessage(prefix + s);
+            }
+        }
+    }
+
     @Override
     public void onEnable() {
-        plugin = this;
-        console = plugin.getServer().getConsoleSender();
-
         setupVault();
     }
 
     private void setupVault() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            console.sendMessage(consolePrefix + " Disabled due to no Vault dependency found!");
+            log("Disabled due to no Vault dependency found!");
             getServer().getPluginManager().disablePlugin(this);
             return;
         } else {
-            console.sendMessage(consolePrefix + " Vault Found");
+            log("Vault Found");
         }
 
         setupRSP();
@@ -63,13 +82,13 @@ public final class BustaMine extends JavaPlugin implements Listener {
             init();
         } else {
             if (setupRspRetryCount >= 3) {
-                console.sendMessage(consolePrefix + " Disabled due to no Vault dependency found!");
+                log("Disabled due to no Vault dependency found!");
                 getServer().getPluginManager().disablePlugin(this);
                 return;
             }
 
             setupRspRetryCount++;
-            console.sendMessage(consolePrefix + " Economy provider not found. Retry... " + setupRspRetryCount + "/3");
+            log("Economy provider not found. Retry... " + setupRspRetryCount + "/3");
 
             Bukkit.getScheduler().runTaskLater(this, this::setupRSP, 30L);
         }
@@ -97,7 +116,7 @@ public final class BustaMine extends JavaPlugin implements Listener {
         setupSound();
         updateConfig();
 
-        console.sendMessage(consolePrefix + "Enabled! :)");
+        log("Enabled! :)");
 
         Game.setupGlass();
         Game.setupSortedMap();
@@ -295,7 +314,7 @@ public final class BustaMine extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        console.sendMessage(consolePrefix + "Disabled");
+        log("Disabled");
     }
 
 }
