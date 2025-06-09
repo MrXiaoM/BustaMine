@@ -5,6 +5,7 @@ import me.sat7.bustamine.commands.CommandMain;
 import me.sat7.bustamine.config.Messages;
 import me.sat7.bustamine.listeners.OnClick;
 import me.sat7.bustamine.listeners.OnJoinLeave;
+import me.sat7.bustamine.manager.UserManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -45,6 +46,9 @@ public final class BustaMine extends JavaPlugin implements Listener {
     public static void log(String info) {
         log(info, null);
     }
+    public static void log(Throwable t) {
+        log(null, t);
+    }
     public static void log(String info, Throwable t) {
         CommandSender console = Bukkit.getConsoleSender();
         String prefix = "§6[BustaMine]§f ";
@@ -60,6 +64,12 @@ public final class BustaMine extends JavaPlugin implements Listener {
                 console.sendMessage(prefix + s);
             }
         }
+    }
+
+    private UserManager userManager;
+
+    public UserManager getUserManager() {
+        return userManager;
     }
 
     @Override
@@ -112,19 +122,18 @@ public final class BustaMine extends JavaPlugin implements Listener {
     private void init() {
         ccConfig = new CustomConfig(this);
         ccBank = new CustomConfig(this);
-        ccUser = new CustomConfig(this);
         ccSound = new CustomConfig(this);
+        userManager = new UserManager(this);
 
         getServer().getPluginManager().registerEvents(this, this);
-        getServer().getPluginManager().registerEvents(new OnClick(), this);
-        getServer().getPluginManager().registerEvents(new OnJoinLeave(), this);
+        getServer().getPluginManager().registerEvents(new OnClick(this), this);
+        getServer().getPluginManager().registerEvents(new OnJoinLeave(this), this);
 
         new CommandMain(this);
 
         Game.calcOdds();
         setupConfig();
         setupBank();
-        setupUser();
         setupSound();
         reloadMessages();
         reloadConfig();
@@ -207,12 +216,6 @@ public final class BustaMine extends JavaPlugin implements Listener {
         ccBank.save();
     }
 
-    private void setupUser() {
-        ccUser.setup("User");
-        ccUser.get().options().copyDefaults(true);
-        ccUser.save();
-    }
-
     private void setupSound() {
         ccSound.setup("Sound");
         ccSound.get().options().header("Enter 0 to play nothing.\nhttps://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html");
@@ -232,7 +235,7 @@ public final class BustaMine extends JavaPlugin implements Listener {
 
         ccConfig.reload();
         ccBank.reload();
-        ccUser.reload();
+        userManager.reload();
         ccSound.reload();
         updateConfig();
         Game.refreshIcons();
@@ -244,7 +247,7 @@ public final class BustaMine extends JavaPlugin implements Listener {
         if (Messages.reload(config)) try {
             config.save(file);
         } catch (IOException e) {
-            log(null, e);
+            log(e);
         }
     }
 

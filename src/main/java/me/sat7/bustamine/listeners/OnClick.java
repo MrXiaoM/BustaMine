@@ -2,6 +2,7 @@ package me.sat7.bustamine.listeners;
 
 import me.sat7.bustamine.BustaMine;
 import me.sat7.bustamine.Game;
+import me.sat7.bustamine.data.User;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -14,6 +15,10 @@ import org.bukkit.inventory.Inventory;
 import static me.sat7.bustamine.config.Messages.Message_NoPermission;
 
 public class OnClick implements Listener {
+    private final BustaMine plugin;
+    public OnClick(BustaMine plugin) {
+        this.plugin = plugin;
+    }
 
     @EventHandler
     public void onDragInGUI(InventoryDragEvent event) {
@@ -87,13 +92,14 @@ public class OnClick implements Listener {
                 }
                 else if (e.getSlot() >= 10 || e.getSlot() <= 16) {
                     String uuid = player.getUniqueId().toString();
+                    User user = plugin.getUserManager().get(player);
                     int mod = 0;
 
                     if (e.getSlot() == 13) {
-                        if (BustaMine.ccUser.get().contains(uuid + ".CashOut")) {
-                            BustaMine.ccUser.get().set(uuid + ".CashOut", null);
+                        if (user.getCashOut() > 0) {
+                            user.setCashOut(-1);
                         } else {
-                            BustaMine.ccUser.get().set(uuid + ".CashOut", 200);
+                            user.setLastJoin(200);
                         }
                         Game.showBetSettingUI(player);
                         return;
@@ -111,7 +117,7 @@ public class OnClick implements Listener {
                         mod = 1000;
                     }
 
-                    int temp = BustaMine.ccUser.get().getInt(uuid + ".CashOut");
+                    int temp = user.getCashOut();
                     int target = temp + mod;
                     if (target < 110) {
                         target = 110;
@@ -120,7 +126,7 @@ public class OnClick implements Listener {
                         target = BustaMine.ccConfig.get().getInt("MultiplierMax") * 100;
                     }
 
-                    BustaMine.ccUser.get().set(uuid + ".CashOut", target);
+                    user.setCashOut(target);
                     Game.showBetSettingUI(player);
                 }
             }
