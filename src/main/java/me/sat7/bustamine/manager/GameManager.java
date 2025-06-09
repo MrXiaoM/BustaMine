@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static me.sat7.bustamine.BustaMine.log;
 import static me.sat7.bustamine.config.Messages.*;
-import static me.sat7.bustamine.config.Messages.UI_BetBtn;
 import static me.sat7.bustamine.utils.Util.*;
 
 public class GameManager {
@@ -169,6 +168,7 @@ public class GameManager {
             ItemStack winChance = createItemStack(config.btnWinChance, null,
                     UI_WinChance.get(), null, 1);
 
+            // TODO: 添加到配置文件
             double bustChance = odd(maxMulti - 1);
             ArrayList<String> winChanceArr = new ArrayList<>();
             winChanceArr.add("§ex2: " + doubleFormat.format((odd(1) - bustChance) * 100 * (1 - baseInstaBust)) + "%");
@@ -183,6 +183,7 @@ public class GameManager {
                 meta.setLore(winChanceArr);
                 winChance.setItemMeta(meta);
             }
+            flag(winChance, "win chance");
             gui().setBothIcon(46, winChance);
         } else {
             gui().setBothIcon(46, null);
@@ -192,6 +193,7 @@ public class GameManager {
             if (gui().getMoneyIcon(45) == null) {
                 ItemStack bankrollBtn = createItemStack(config.btnBankroll, null,
                         UI_Bankroll.get(), null, 1);
+                flag(bankrollBtn, "bankroll");
                 gui().setBothIcon(45, bankrollBtn);
             }
             updateBankroll(BustaType.MONEY, 0);
@@ -203,25 +205,31 @@ public class GameManager {
         {
             ItemStack bet10Btn = createItemStack(config.btnBetSmall, null,
                     UI_BetBtn.get() + " §e" + config.currencySymbol + config.betSmall, null, 1);
+            flag(bet10Btn, "bet:small");
             gui().setMoneyIcon(51, bet10Btn);
             ItemStack betE1Btn = createItemStack(config.btnBetSmall, null,
                     UI_BetBtn.get() + " §eXp" + config.betExpSmall, null, 1);
+            flag(betE1Btn, "bet:small");
             gui().setExpIcon(51, betE1Btn);
 
             // 100
             ItemStack bet100Btn = createItemStack(config.btnBetMedium, null,
                     UI_BetBtn.get() + " §e" + config.currencySymbol + config.betMedium, null, 1);
+            flag(bet100Btn, "bet:medium");
             gui().setMoneyIcon(52, bet100Btn);
             ItemStack betE2Btn = createItemStack(config.btnBetMedium, null,
                     UI_BetBtn.get() + " §eXp" + config.betExpMedium, null, 1);
+            flag(betE2Btn, "bet:medium");
             gui().setExpIcon(52, betE2Btn);
 
             // 1000
             ItemStack bet1000Btn = createItemStack(config.btnBetBig, null,
                     UI_BetBtn.get() + " §e" + config.currencySymbol + config.betBig, null, 1);
+            flag(bet100Btn, "bet:big");
             gui().setMoneyIcon(53, bet1000Btn);
             ItemStack betE3Btn = createItemStack(config.btnBetBig, null,
                     UI_BetBtn.get() + " §eXp" + config.betExpBig, null, 1);
+            flag(betE3Btn, "bet:big");
             gui().setExpIcon(53, betE3Btn);
         }
 
@@ -495,6 +503,7 @@ public class GameManager {
                     meta.setLore(lore);
                     skull.setItemMeta(meta);
                 }
+                flag(skull, "show player info:" + p.getName());
                 gui().setBothIcon(playerMap.size() - 1, skull);
 
                 headPos.put(p.getUniqueId(), playerMap.size() - 1);
@@ -515,6 +524,7 @@ public class GameManager {
                         meta.setLore(lore);
                         item.setItemMeta(meta);
                     }
+                    flag(item, "show player info:" + p.getName());
                     gui().setBothIcon(idx, item);
                 }
             } catch (Exception e) {
@@ -535,6 +545,7 @@ public class GameManager {
         }
 
         item.setItemMeta(meta);
+        flag(item, "show player info:" + p.getName());
         gui().setBothIcon(idx, item);
     }
 
@@ -580,6 +591,7 @@ public class GameManager {
                 out.setItemMeta(meta);
             }
 
+            flag(out, "show player info:" + p.getName());
             gui().setBothIcon(headPos.get(p.getUniqueId()), out);
             headPos.remove(p.getUniqueId());
         }

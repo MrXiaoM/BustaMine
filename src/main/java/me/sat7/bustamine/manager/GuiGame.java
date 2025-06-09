@@ -7,7 +7,6 @@ import me.sat7.bustamine.manager.gui.BustaGuiHolder;
 import me.sat7.bustamine.manager.gui.IBustaMineGui;
 import me.sat7.bustamine.utils.Item;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -109,34 +108,34 @@ public class GuiGame implements Listener {
         }
         Inventory inv = new BustaGuiHolder(type, 54, title).getInventory();
 
-        // Bankroll
         if (config.isShowBankroll.val()) {
             ItemStack bankrollBtn = createItemStack(config.btnBankroll, null,
                     UI_Bankroll.get(), null, 1);
+            flag(bankrollBtn, "bankroll");
             inv.setItem(45, bankrollBtn);
         }
 
-        // 내 정보
         ArrayList<String> myStateLore = new ArrayList<>();
         myStateLore.add(UI_Click.get());
         ItemStack myStateBtn = createItemStack(config.btnMyState, null,
                 UI_MyState.get(), myStateLore, 1);
+        flag(myStateBtn, "my state");
         inv.setItem(47, myStateBtn);
 
-        // 기록 버튼
         ItemStack historyBtn = createItemStack(config.btnHistory, null,
                 UI_History.get(), null, 1);
+        flag(historyBtn, "history");
         inv.setItem(48, historyBtn);
 
-        // 스톱 버튼
-        ItemStack closeBtn = createItemStack(config.btnCashOut, null,
+        ItemStack cashOutBtn = createItemStack(config.btnCashOut, null,
                 UI_CashOut.get(), null, 1);
-        inv.setItem(49, closeBtn);
+        flag(cashOutBtn, "cash out");
+        inv.setItem(49, cashOutBtn);
 
-        // 설정 버튼
-        ItemStack cosBtn = createItemStack(config.btnCashOutSetting, null,
+        ItemStack showBetSettingBtn = createItemStack(config.btnCashOutSetting, null,
                 UI_CashOutSetting.get(), null, 1);
-        inv.setItem(50, cosBtn);
+        flag(showBetSettingBtn, "show bet setting");
+        inv.setItem(50, showBetSettingBtn);
 
         if (type == BustaType.MONEY) {
             gameInventory = inv;
@@ -176,67 +175,74 @@ public class GuiGame implements Listener {
         }
         parent.old.clear();
 
-        int[] intarr = null;
+        int[] slots;
         if (num == 5) {
-            intarr = new int[]{5, 4, 3, 12, 21, 22, 23, 32, 39, 40, 41};
+            slots = new int[] { 5, 4, 3, 12, 21, 22, 23, 32, 39, 40, 41 };
         } else if (num == 4) {
-            intarr = new int[]{3, 12, 21, 22, 23, 14, 5, 32, 41};
+            slots = new int[] { 3, 12, 21, 22, 23, 14, 5, 32, 41 };
         } else if (num == 3) {
-            intarr = new int[]{3, 4, 5, 14, 21, 22, 23, 32, 39, 40, 41};
+            slots = new int[] { 3, 4, 5, 14, 21, 22, 23, 32, 39, 40, 41 };
         } else if (num == 2) {
-            intarr = new int[]{3, 4, 5, 14, 23, 22, 21, 30, 39, 40, 41};
+            slots = new int[] { 3, 4, 5, 14, 23, 22, 21, 30, 39, 40, 41 };
         } else if (num == 1) {
-            intarr = new int[]{5, 14, 23, 32, 41};
+            slots = new int[] { 5, 14, 23, 32, 41 };
         } else {
-            intarr = new int[]{3, 4, 5, 14, 23, 32, 41, 40, 39, 30, 21, 12};
+            slots = new int[] { 3, 4, 5, 14, 23, 32, 41, 40, 39, 30, 21, 12 };
         }
 
-        for (int j : intarr) {
+        for (int j : slots) {
             parent.old.put(j, getMoneyIcon(j));
             setBothIcon(j, getGlassItem(0));
         }
     }
 
     @EventHandler
+    @SuppressWarnings("IfCanBeSwitch")
     public void onClick(InventoryClickEvent e) {
         if (e.isCancelled() || !(e.getWhoClicked() instanceof Player)) return;
         InventoryView view = e.getView();
         Player player = (Player) e.getWhoClicked();
         if (view.getTopInventory().getHolder() instanceof BustaGuiHolder) {
             e.setCancelled(true);
-            if (e.getClickedInventory() == null) return;
+            ItemStack item = e.getCurrentItem();
+            if (e.getClickedInventory() == null || item == null) return;
             BustaType type = ((BustaGuiHolder) view.getTopInventory().getHolder()).getType();
 
             plugin.sounds().play(player, "Click");
-
-            if (e.getSlot() == 51 || e.getSlot() == 52 || e.getSlot() == 53) {
-                if (type.equals(BustaType.EXP)) {
-                    int amount = betExpSmall;
-                    if (e.getSlot() == 52) amount = betExpMedium;
-                    if (e.getSlot() == 53) amount = betExpBig;
-                    parent.bet(player, BustaType.EXP, amount);
-                } else {
-                    int amount = betMoneySmall;
-                    if (e.getSlot() == 52) amount = betMoneyMedium;
-                    if (e.getSlot() == 53) amount = betMoneyBig;
-                    parent.bet(player, BustaType.MONEY, amount);
+            String flag = flag(item);
+            if (flag.startsWith("bet:")) { // 51, 52, 53
+                int amount;
+                String button = flag.substring(4);
+                if (type.equals(BustaType.EXP)) switch (button) {
+                    case "small":  amount = betExpSmall;  break;
+                    case "medium": amount = betExpMedium; break;
+                    case "big":    amount = betExpBig;    break;
+                    default:       return;
+                } else switch (button) {
+                    case "small":  amount = betMoneySmall;  break;
+                    case "medium": amount = betMoneyMedium; break;
+                    case "big":    amount = betMoneyBig;    break;
+                    default:       return;
                 }
+                parent.bet(player, type, amount);
+                return;
             }
-            else if (e.getSlot() == 50) {
+            if (flag.equals("show bet setting")) { // 50
                 parent.betSettings().showBetSettingUI(player);
+                return;
             }
-            else if (e.getSlot() == 49) {
+            if (flag.equals("cash out")) { // 49
                 parent.cashOut(player);
+                return;
             }
-            else if (e.getSlot() == 47) {
+            if (flag.equals("my state")) { // 47
                 plugin.users().showPlayerInfo(player, player);
-            } else if (e.getSlot() < 45) {
-                String str = ChatColor.stripColor(e.getCurrentItem().getItemMeta().getDisplayName());
-
-                if (str.isEmpty()) return;
-
-                Player p = Bukkit.getPlayer(str);
+                return;
+            }
+            if (flag.startsWith("show player info:")) { // < 45
+                Player p = Bukkit.getPlayer(flag.substring(17));
                 if (p != null) plugin.users().showPlayerInfo(player, p);
+                return;
             }
         }
     }
