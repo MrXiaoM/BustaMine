@@ -41,9 +41,9 @@ public class GameManager {
     protected final List<Integer> history = new ArrayList<>();
     protected final Map<Integer, ItemStack> old = new HashMap<>();
 
-    final Map<String, BustaType> playerMap = new HashMap<>();
-    final Map<String, Integer> activePlayerMap = new ConcurrentHashMap<>();
-    final Map<String, Integer> headPos = new HashMap<>();
+    final Map<UUID, BustaType> playerMap = new HashMap<>();
+    final Map<UUID, Integer> activePlayerMap = new ConcurrentHashMap<>();
+    final Map<UUID, Integer> headPos = new HashMap<>();
     
     final GuiGame guiGame;
     final GuiBetSettings guiBetSettings;
@@ -131,9 +131,8 @@ public class GameManager {
             mod = 32;
         }
 
-        for (String s : activePlayerMap.keySet()) {
+        for (UUID uuid : activePlayerMap.keySet()) {
             try {
-                UUID uuid = UUID.fromString(s);
                 OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
                 User user = plugin.users().get(player);
                 if (user.getCashOut() >= 0) {
@@ -302,11 +301,11 @@ public class GameManager {
             gui().updateBothIcon(49, newLore);
 
             if (plugin.ccConfig.get().getBoolean("UIForceUpdate", false)) {
-                for (String p : playerMap.keySet()) {
-                    if (p == null)
+                for (UUID uuid : playerMap.keySet()) {
+                    if (uuid == null)
                         continue;
 
-                    Player player = Bukkit.getPlayer(p);
+                    Player player = Bukkit.getPlayer(uuid);
                     if (player != null)
                         player.updateInventory();
                 }
@@ -328,12 +327,10 @@ public class GameManager {
             Bukkit.getServer().broadcastMessage(prefix() + "§a§lBusted! : x" + doubleFormat.format(curNum / 100.0));
         }
 
-        for (String s : playerMap.keySet()) {
+        for (UUID uuid : playerMap.keySet()) {
             try {
-                for (String bustP : activePlayerMap.keySet()) {
+                for (UUID uuidBust : activePlayerMap.keySet()) {
                     try {
-                        UUID uuid = UUID.fromString(s);
-                        UUID uuidBust = UUID.fromString(bustP);
                         Player p1 = Bukkit.getPlayer(uuid);
                         Player p2 = Bukkit.getPlayer(uuidBust);
                         if (p1 != null && p2 != null) {
@@ -345,9 +342,8 @@ public class GameManager {
             } catch (Exception ignored) {
             }
         }
-        for (String bustP : activePlayerMap.keySet()) {
+        for (UUID uuidBust : activePlayerMap.keySet()) {
             try {
-                UUID uuidBust = UUID.fromString(bustP);
                 plugin.sounds().play(Bukkit.getPlayer(uuidBust), "Bust");
             } catch (Exception ignored) {
             }
@@ -390,12 +386,12 @@ public class GameManager {
     public void bet(Player p, BustaType type, int amount) {
         if (bState != BustaState.BET) return;
 
-        boolean firstBet = !activePlayerMap.containsKey(p.getUniqueId().toString());
+        boolean firstBet = !activePlayerMap.containsKey(p.getUniqueId());
         int old = 0;
-        if (activePlayerMap.containsKey(p.getUniqueId().toString()))
-            old = activePlayerMap.get(p.getUniqueId().toString());
+        if (activePlayerMap.containsKey(p.getUniqueId()))
+            old = activePlayerMap.get(p.getUniqueId());
 
-        if (playerMap.containsKey(p.getUniqueId().toString()) && !playerMap.get(p.getUniqueId().toString()).equals(type.toString())) {
+        if (playerMap.containsKey(p.getUniqueId()) && !playerMap.get(p.getUniqueId()).equals(type)) {
             return;
         }
 
@@ -416,18 +412,20 @@ public class GameManager {
 
                 plugin.sounds().play(p, "Bet");
                 runCommandBet(p, amount);
-                activePlayerMap.put(p.getUniqueId().toString(), old + amount);
+                activePlayerMap.put(p.getUniqueId(), old + amount);
                 Message_DivUpper.t(p);
                 p.sendMessage("   §f" + Bet.get() + plugin.ccConfig.get().getString("CurrencySymbol") + (old + amount));
                 p.sendMessage("   §e" + MyBal.get() + ": " + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(economy.getBalance(p)));
                 Message_DivLower.t(p);
 
                 if (firstBet) {
-                    for (String s : playerMap.keySet()) {
-                        if (p.getUniqueId().toString().equals(s)) continue;
+                    for (UUID uuid : playerMap.keySet()) {
+                        if (p.getUniqueId().equals(uuid)) continue;
                         try {
-                            UUID uuid = UUID.fromString(s);
-                            Bukkit.getPlayer(uuid).sendMessage("§6♣ " + p.getName() + " " + Bet.get() + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(old + amount));
+                            Player player = Bukkit.getPlayer(uuid);
+                            if (player != null) {
+                                player.sendMessage("§6♣ " + p.getName() + " " + Bet.get() + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(old + amount));
+                            }
                         } catch (Exception ignored) {
                         }
                     }
@@ -448,17 +446,16 @@ public class GameManager {
                 p.giveExp(-amount);
 
                 runCommandBet(p, amount);
-                activePlayerMap.put(p.getUniqueId().toString(), old + amount);
+                activePlayerMap.put(p.getUniqueId(), old + amount);
                 Message_DivUpper.t(p);
                 p.sendMessage("   §f" + Bet.get() + " Xp" + (old + amount));
                 p.sendMessage("   §e" + MyBal.get() + ": Xp" + calcTotalExp(p));
                 Message_DivLower.t(p);
 
                 if (firstBet) {
-                    for (String s : playerMap.keySet()) {
-                        if (p.getUniqueId().toString().equals(s)) continue;
+                    for (UUID uuid : playerMap.keySet()) {
+                        if (p.getUniqueId().equals(uuid)) continue;
                         try {
-                            UUID uuid = UUID.fromString(s);
                             Player player = Bukkit.getPlayer(uuid);
                             if (player != null) {
                                 player.sendMessage("§6♣ " + p.getName() + " " + Bet.get() + " Xp" + (old + amount));
@@ -474,11 +471,11 @@ public class GameManager {
             }
         }
 
-        updateBankroll(BustaType.valueOf(type.toString()), amount);
-        updateNetProfit(p, BustaType.valueOf(type.toString()), -amount);
+        updateBankroll(type, amount);
+        updateNetProfit(p, type, -amount);
 
         if (firstBet) {
-            playerMap.put(p.getUniqueId().toString(), type);
+            playerMap.put(p.getUniqueId(), type);
 
             User user = plugin.users().get(p);
             user.setGamesPlayed(user.getGamesPlayed() + 1);
@@ -506,12 +503,12 @@ public class GameManager {
                 }
                 gui().setBothIcon(playerMap.size() - 1, skull);
 
-                headPos.put(p.getUniqueId().toString(), playerMap.size() - 1);
+                headPos.put(p.getUniqueId(), playerMap.size() - 1);
             }
         } else {
             try {
-                if (headPos.containsKey(p.getUniqueId().toString())) {
-                    int idx = headPos.get(p.getUniqueId().toString());
+                if (headPos.containsKey(p.getUniqueId())) {
+                    int idx = headPos.get(p.getUniqueId());
                     ItemStack item = gui().getMoneyIcon(idx);
                     ItemMeta meta = item.getItemMeta();
                     if (meta != null) {
@@ -548,10 +545,10 @@ public class GameManager {
     }
 
     public void cashOut(Player p) {
-        if (!activePlayerMap.containsKey(p.getUniqueId().toString())) return;
+        if (!activePlayerMap.containsKey(p.getUniqueId())) return;
         if (bState != BustaState.GAME) return;
 
-        double bet = activePlayerMap.get(p.getUniqueId().toString());
+        double bet = activePlayerMap.get(p.getUniqueId());
         double prize = bet * (curNum / 100.0);
 
         runCommandCashOut(p, bet, curNum, prize);
@@ -559,7 +556,7 @@ public class GameManager {
 
         Message_DivUpper.t(p);
         p.sendMessage("   §f" + CashedOut.get() + ": x" + doubleFormat.format(curNum / 100.0));
-        if (playerMap.get(p.getUniqueId().toString()) == BustaType.MONEY) {
+        if (playerMap.get(p.getUniqueId()) == BustaType.MONEY) {
             p.sendMessage("   §3" + Profit.get() + ": " + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(prize - bet));
             plugin.getEconomy().depositPlayer(p, prize);
             p.sendMessage("   §e" + MyBal.get() + ": " + plugin.ccConfig.get().getString("CurrencySymbol") + doubleFormat.format(plugin.getEconomy().getBalance(p)));
@@ -570,11 +567,11 @@ public class GameManager {
         }
         Message_DivLower.t(p);
 
-        activePlayerMap.remove(p.getUniqueId().toString());
+        activePlayerMap.remove(p.getUniqueId());
 
-        if (headPos.containsKey(p.getUniqueId().toString())) {
+        if (headPos.containsKey(p.getUniqueId())) {
             ItemStack out = new ItemStack(getGlass(11));
-            ItemStack head = gui().getMoneyIcon(headPos.get(p.getUniqueId().toString()));
+            ItemStack head = gui().getMoneyIcon(headPos.get(p.getUniqueId()));
             ItemMeta headMeta = head.getItemMeta();
             List<String> oldLore = headMeta != null ? headMeta.getLore() : null;
 
@@ -589,21 +586,23 @@ public class GameManager {
                 out.setItemMeta(meta);
             }
 
-            gui().setBothIcon(headPos.get(p.getUniqueId().toString()), out);
-            headPos.remove(p.getUniqueId().toString());
+            gui().setBothIcon(headPos.get(p.getUniqueId()), out);
+            headPos.remove(p.getUniqueId());
         }
 
-        for (String s : playerMap.keySet()) {
-            if (p.getUniqueId().toString().equals(s)) continue;
+        for (UUID uuid : playerMap.keySet()) {
+            if (p.getUniqueId().equals(uuid)) continue;
             try {
-                UUID uuid = UUID.fromString(s);
-                Bukkit.getPlayer(uuid).sendMessage("§6♣ " + p.getName() + " " + CashedOut.get() + " x" + doubleFormat.format(curNum / 100.0));
+                Player player = Bukkit.getPlayer(uuid);
+                if (player != null) {
+                    player.sendMessage("§6♣ " + p.getName() + " " + CashedOut.get() + " x" + doubleFormat.format(curNum / 100.0));
+                }
             } catch (Exception ignored) {
             }
         }
 
-        updateBankroll(playerMap.get(p.getUniqueId().toString()), -prize);
-        updateNetProfit(p, playerMap.get(p.getUniqueId().toString()), prize);
+        updateBankroll(playerMap.get(p.getUniqueId()), -prize);
+        updateNetProfit(p, playerMap.get(p.getUniqueId()), prize);
     }
 
     private void updateBankroll(BustaType type, double amount) {
