@@ -160,7 +160,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     debugResult.setup(name, config -> {
                         ArrayList<Integer> tempList = new ArrayList<>();
                         for (int i = 0; i < 100000; i++) {
-                            tempList.add(plugin.game().genBustNum());
+                            tempList.add(plugin.game().generateBustNum());
                         }
                         config.set("result", tempList);
                     });

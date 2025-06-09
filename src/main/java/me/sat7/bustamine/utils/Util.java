@@ -20,6 +20,7 @@ public class Util {
     public static void init() {
         // calcOdds
         for (int i = 1; i <= 150; i++) {
+            // 计算函数 1 / (i^1.01) 的在 整数定义域，且在 1-150 之间的值
             oddList[i - 1] = 1 / Math.pow(i, 1.01);
         }
     }
@@ -28,29 +29,41 @@ public class Util {
         return oddList[index];
     }
 
-    public static int genBustNum(double baseInstaBust, int maxMulti) {
+    /**
+     * 生成归零计数
+     * @param baseInstantBust 立即归零概率 (0-1)
+     * @param maxMulti 最大乘数
+     * @return 归零计数，特殊值 <code>100</code> 代表立即归零
+     */
+    public static int generateBustNum(double baseInstantBust, int maxMulti) {
+        // 计算概率，判定立即归零情况
+        if (generator.nextDouble() < baseInstantBust) return 100;
+
         double randD = generator.nextDouble();
 
-        if (randD < baseInstaBust) return 100;
-
-        randD = generator.nextDouble();
-
         for (int j = maxMulti; j > 0; j--) {
+            // 如果生成的随机数小于 1/(j^1.01) 的值
             if (randD < oddList[j - 1]) {
+                // 如果是第一次循环，直接归零
                 if (j == maxMulti) return 100;
 
                 double temp = generator.nextDouble();
+                // 如果 j <= 3
+                // 有 50% 的几率随机数乘以 0.6
+                // 有 25% 的几率随机数乘以 0.6 再乘以 0.4
                 if (j <= 3 && generator.nextBoolean()) {
                     temp *= 0.6;
                     if (generator.nextBoolean()) temp *= 0.4;
                 }
 
+                // 最终的归零计数
                 int tempInt = (int) ((j + temp) * 100);
-                if (tempInt == 100) tempInt = 101;
-                return tempInt;
+                // 防止立即归零
+                return tempInt == 100 ? 101 : tempInt;
             }
         }
 
+        // 如果这次游戏的运气很好，随机数无论如何也没有命中，使用固定的归零计数
         return 101;
     }
 
