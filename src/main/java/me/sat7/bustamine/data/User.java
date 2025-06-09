@@ -9,6 +9,7 @@ public class User {
     double netProfit;
     int netProfitExp;
     long lastJoin;
+    String lastName;
 
     public User(OfflinePlayer player) {
         this.player = player;
@@ -56,5 +57,13 @@ public class User {
 
     public void setLastJoin(long lastJoin) {
         this.lastJoin = lastJoin;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 }

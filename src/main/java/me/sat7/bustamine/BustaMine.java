@@ -209,6 +209,8 @@ public final class BustaMine extends JavaPlugin {
     @Override
     public void onDisable() {
         getScheduler().cancelAllTasks();
+        bank().save();
+        users().save();
         log("Disabled");
     }
 }

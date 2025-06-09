@@ -30,6 +30,7 @@ public class UserManager implements Listener {
     private final Map<UUID, User> users = new HashMap<>();
     private final Map<String, HashMap<String, Double>> sortedMap = new HashMap<>();
     private final Map<String, Long> sortedTime = new HashMap<>();
+    private boolean firstLoad = true;
     public UserManager(BustaMine plugin) {
         this.plugin = plugin;
         this.file = plugin.resolve("users.yml");
@@ -75,6 +76,13 @@ public class UserManager implements Listener {
             user.setLastJoin(entry.getLong("LastJoin"));
             users.put(uuid, user);
         }
+        if (firstLoad) {
+            firstLoad = false;
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                updateLastData(player);
+            }
+            save();
+        }
     }
 
     public void save() {
@@ -96,10 +104,14 @@ public class UserManager implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        User user = get(e.getPlayer());
-        user.setLastJoin(System.currentTimeMillis());
+        updateLastData(e.getPlayer());
     }
 
+    private void updateLastData(Player player) {
+        User user = get(player);
+        user.setLastJoin(System.currentTimeMillis());
+        user.setLastName(player.getName());
+    }
 
     public void showPlayerInfo(@NotNull CommandSender to, @NotNull Player data) {
         User user = plugin.users().get(data);
