@@ -1,5 +1,6 @@
 package me.sat7.bustamine.manager;
 
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import me.sat7.bustamine.BustaMine;
 import me.sat7.bustamine.config.Config;
 import me.sat7.bustamine.data.User;
@@ -15,7 +16,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +26,7 @@ import static me.sat7.bustamine.utils.Util.*;
 
 public class GameManager {
     private final BustaMine plugin;
-    private BukkitTask bustaTask;
+    private WrappedTask bustaTask;
     private BustaState bState = BustaState.BET;
     private boolean gameEnable;
     private int betTimeLeft;
@@ -241,8 +241,7 @@ public class GameManager {
             guiGameShared().updateBothIcon(49, im);
         }
 
-        bustaTask = Bukkit.getScheduler().runTaskTimer(plugin, () ->
-        {
+        bustaTask = plugin.getScheduler().runTimer(() -> {
             if (--betTimeLeft <= 0) {
                 bustaTask.cancel();
 
@@ -282,7 +281,7 @@ public class GameManager {
 
         runCommandRoundStart();
 
-        bustaTask = Bukkit.getScheduler().runTaskTimer(plugin, () ->
+        bustaTask = plugin.getScheduler().runTimer(() ->
         {
             boolean instaBust = (bustNum == 100);
 
@@ -292,9 +291,8 @@ public class GameManager {
                 bust(instaBust);
 
                 if (gameEnable) {
-                    bustaTask = Bukkit.getScheduler().runTaskLater(plugin, this::startGame, 80);
+                    bustaTask = plugin.getScheduler().runLater(this::startGame, 80L);
                 }
-
                 return;
             }
 
@@ -489,7 +487,7 @@ public class GameManager {
                 ItemMeta meta = skull.getItemMeta();
 
                 if (config.isLoadPlayerSkin.val()) {
-                    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> loadAndSetSkin(p, playerMap.size() - 1));
+                    plugin.getScheduler().runAsync(t -> loadAndSetSkin(p, playerMap.size() - 1));
                 }
 
                 if (meta != null) {

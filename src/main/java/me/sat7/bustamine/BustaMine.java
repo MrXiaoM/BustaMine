@@ -1,5 +1,7 @@
 package me.sat7.bustamine;
 
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.impl.PlatformScheduler;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import me.sat7.bustamine.commands.CommandMain;
 import me.sat7.bustamine.config.Config;
@@ -28,9 +30,10 @@ public final class BustaMine extends JavaPlugin {
     public static BustaMine inst() {
         return plugin;
     }
-
+    private final FoliaLib foliaLib;
     public BustaMine() {
         plugin = this;
+        this.foliaLib = new FoliaLib(this);
     }
 
     public static void log(String info) {
@@ -63,6 +66,10 @@ public final class BustaMine extends JavaPlugin {
     private UserManager userManager;
     private GameManager gameManager;
     private Sounds sounds;
+
+    public PlatformScheduler getScheduler() {
+        return foliaLib.getScheduler();
+    }
 
     public Economy getEconomy() {
         return econ;
@@ -126,7 +133,7 @@ public final class BustaMine extends JavaPlugin {
         int next = retriedCount + 1;
         log("Economy provider not found. Retrying... " + next + "/3");
 
-        Bukkit.getScheduler().runTaskLater(this, () -> setupEconomy(next), 30L);
+        getScheduler().runLater(t -> setupEconomy(next), 30L);
     }
 
     private void init() {
@@ -201,6 +208,7 @@ public final class BustaMine extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        getScheduler().cancelAllTasks();
         log("Disabled");
     }
 }

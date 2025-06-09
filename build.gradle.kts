@@ -21,6 +21,7 @@ dependencies {
     compileOnly("net.milkbowl.vault:VaultAPI:1.7")
 
     implementation("de.tr7zw:item-nbt-api:2.15.0")
+    implementation("com.github.technicallycoded:FoliaLib:0.4.4")
     implementation("org.jetbrains:annotations:24.0.0")
 }
 val targetJavaVersion = 8
@@ -38,6 +39,7 @@ tasks {
             "org.intellij.lang.annotations" to "annotations.intellij",
             "org.jetbrains.annotations" to "annotations.jetbrains",
             "de.tr7zw.changeme.nbtapi" to "nbtapi",
+            "com.tcoded.folialib" to "folialib",
         ).forEach { (original, target) ->
             relocate(original, "$shadowGroup.$target")
         }
