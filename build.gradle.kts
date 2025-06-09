@@ -36,6 +36,13 @@ tasks {
             options.release.set(targetJavaVersion)
         }
     }
+    processResources {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        from(sourceSets.main.get().resources.srcDirs) {
+            expand(mapOf("version" to project.version))
+            include("plugin.yml")
+        }
+    }
 }
 publishing {
     publications {
