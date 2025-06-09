@@ -4,6 +4,7 @@ import me.sat7.bustamine.BustaMine;
 import me.sat7.bustamine.data.User;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -100,7 +101,7 @@ public class UserManager implements Listener {
     }
 
 
-    public void showPlayerInfo(Player to, Player data) {
+    public void showPlayerInfo(@NotNull CommandSender to, @NotNull Player data) {
         User user = plugin.users().get(data);
         Message_DivUpper.t(to);
         to.sendMessage("   §6§l" + data.getName());
@@ -108,7 +109,7 @@ public class UserManager implements Listener {
         to.sendMessage("     §3" + plugin.config().currencySymbol + "  " + doubleFormat.format(user.getNetProfit()));
         to.sendMessage("     §3Xp " + user.getNetProfitExp());
 
-        if (to == data) {
+        if (to instanceof Player && ((Player) to).getUniqueId().equals(data.getUniqueId())) {
             to.sendMessage("   §e" + Bal.get());
             to.sendMessage("     §e" + plugin.config().getString("CurrencySymbol") + "  " + doubleFormat.format(plugin.getEconomy().getBalance(data)));
             to.sendMessage("     §eXp " + calcTotalExp(data));
@@ -118,7 +119,7 @@ public class UserManager implements Listener {
         Message_DivLower.t(to);
     }
 
-    public void showStatistics(Player p) {
+    public void showStatistics(@NotNull CommandSender p) {
         double moneyIn = plugin.bank().getDouble("Statistics.Income.Money");
         double moneyOut = plugin.bank().getDouble("Statistics.Expense.Money");
         int expIn = plugin.bank().getInt("Statistics.Income.Exp");
@@ -135,7 +136,7 @@ public class UserManager implements Listener {
         Message_DivLower.t(p);
     }
 
-    public void top(Player p, String type) {
+    public void top(@NotNull CommandSender p, String type) {
         if (sortedTime.get(type) + (1000L * 60) < System.currentTimeMillis()) {
             sortedMap.get(type).clear();
             for (User user : users()) {

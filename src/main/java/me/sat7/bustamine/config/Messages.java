@@ -2,6 +2,7 @@ package me.sat7.bustamine.config;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
+import org.jetbrains.annotations.NotNull;
 
 public enum Messages {
     Message_Prefix("§6§l[BustaMine]§r "),
@@ -83,7 +84,7 @@ public enum Messages {
         return currentValue;
     }
 
-    public boolean t(CommandSender sender) {
+    public boolean t(@NotNull CommandSender sender) {
         return msg(sender, get());
     }
 

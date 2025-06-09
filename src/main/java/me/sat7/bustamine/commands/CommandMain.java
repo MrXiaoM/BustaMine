@@ -26,12 +26,10 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            return true;
-        }
-        Player player = (Player) sender;
+        Player player = sender instanceof Player ? (Player) sender : null;
 
         if (args.length == 0) {
+            if (player == null) return true;
             if (player.hasPermission("bm.user.money")) {
                 plugin.game().guiGameShared().openGameGUI(player, BustaType.MONEY);
             } else if (player.hasPermission("bm.user.exp")) {
@@ -45,6 +43,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
             switch (args[0]) {
                 case "help":
                 case "?":
+                    if (player == null) return true;
                     player.sendMessage(prefix() + "Help");
                     player.sendMessage("/bm [money | exp]");
                     player.sendMessage("/bm stats [player]");
@@ -60,6 +59,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     }
                     break;
                 case "money":
+                    if (player == null) return true;
                     if (!player.hasPermission("bm.user.money")) {
                         return Message_NoPermission.t(player);
                     }
@@ -67,6 +67,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     plugin.game().guiGameShared().openGameGUI(player, BustaType.MONEY);
                     break;
                 case "exp":
+                    if (player == null) return true;
                     if (!player.hasPermission("bm.user.exp")) {
                         return Message_NoPermission.t(player);
                     }
@@ -74,48 +75,52 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     plugin.game().guiGameShared().openGameGUI(player, BustaType.EXP);
                     break;
                 case "stats":
-                    if (!player.hasPermission("bm.user.stats")) {
-                        return Message_NoPermission.t(player);
+                    if (!sender.hasPermission("bm.user.stats")) {
+                        return Message_NoPermission.t(sender);
                     }
 
                     if (args.length > 1) {
                         Player p = Bukkit.getPlayer(args[1]);
                         if (p != null) {
-                            plugin.users().showPlayerInfo(player, p);
+                            plugin.users().showPlayerInfo(sender, p);
                         } else {
-                            Message_PlayerNotExist.t(player);
+                            Message_PlayerNotExist.t(sender);
                         }
                     } else {
+                        if (player == null) {
+                            Message_PlayerNotExist.t(sender);
+                            break;
+                        }
                         plugin.users().showPlayerInfo(player, player);
                     }
                     break;
                 case "top":
-                    if (!player.hasPermission("bm.user.top")) {
-                        return Message_NoPermission.t(player);
+                    if (!sender.hasPermission("bm.user.top")) {
+                        return Message_NoPermission.t(sender);
                     }
 
                     if (args.length >= 2) {
                         if (args[1].equals("NetProfit") || args[1].equals("NetProfit_Exp") || args[1].equals("GamesPlayed")) {
-                            plugin.users().top(player, args[1]);
+                            plugin.users().top(sender, args[1]);
                         } else {
-                            msg(player, "[NetProfit | NetProfit_Exp | GamesPlayed]");
+                            msg(sender, "[NetProfit | NetProfit_Exp | GamesPlayed]");
                         }
                     } else {
-                        plugin.users().top(player, "NetProfit");
+                        plugin.users().top(sender, "NetProfit");
                     }
                     break;
                 case "reloadConfig":
-                    if (!player.hasPermission("bm.admin")) {
-                        return Message_NoPermission.t(player);
+                    if (!sender.hasPermission("bm.admin")) {
+                        return Message_NoPermission.t(sender);
                     }
 
                     plugin.reloadConfig();
 
-                    Message_Reload_FromNextRound.t(player);
+                    Message_Reload_FromNextRound.t(sender);
                     break;
                 case "reloadLang":
-                    if (!player.hasPermission("bm.admin")) {
-                        return Message_NoPermission.t(player);
+                    if (!sender.hasPermission("bm.admin")) {
+                        return Message_NoPermission.t(sender);
                     }
 
                     plugin.reloadMessages();
@@ -125,29 +130,29 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     plugin.game().startGame();
                     plugin.game().setGameEnable(true);
 
-                    msg(player, "Game was terminated by server");
-                    Message_Reload_Normal.t(player);
+                    msg(sender, "Game was terminated by server");
+                    Message_Reload_Normal.t(sender);
                     break;
                 case "go":
-                    if (!player.hasPermission("bm.admin")) {
-                        return Message_NoPermission.t(player);
+                    if (!sender.hasPermission("bm.admin")) {
+                        return Message_NoPermission.t(sender);
                     }
 
                     plugin.game().startGame();
                     plugin.game().setGameEnable(true);
-                    Message_Start.t(player);
+                    Message_Start.t(sender);
                     break;
                 case "stop":
-                    if (!player.hasPermission("bm.admin")) {
-                        return Message_NoPermission.t(player);
+                    if (!sender.hasPermission("bm.admin")) {
+                        return Message_NoPermission.t(sender);
                     }
 
                     plugin.game().setGameEnable(false);
-                    Message_Stop.t(player);
+                    Message_Stop.t(sender);
                     break;
                 case "test":
-                    if (!player.hasPermission("bm.admin")) {
-                        return Message_NoPermission.t(player);
+                    if (!sender.hasPermission("bm.admin")) {
+                        return Message_NoPermission.t(sender);
                     }
 
                     String name = "TestResult_" + System.currentTimeMillis();
@@ -161,14 +166,14 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     });
                     debugResult.save();
 
-                    msg(player, "File generated. plugins/" + plugin.getDescription().getName() + "/" + name + ".yml");
+                    msg(sender, "File generated. plugins/" + plugin.getDescription().getName() + "/" + name + ".yml");
                     break;
                 case "statistics":
-                    if (!player.hasPermission("bm.admin")) {
-                        return Message_NoPermission.t(player);
+                    if (!sender.hasPermission("bm.admin")) {
+                        return Message_NoPermission.t(sender);
                     }
 
-                    plugin.users().showStatistics(player);
+                    plugin.users().showStatistics(sender);
                     break;
             }
         }
@@ -179,8 +184,8 @@ public class CommandMain implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
         if (args.length == 1) {
-            ArrayList<String> temp = new ArrayList<>();
-            ArrayList<String> list = new ArrayList<>();
+            List<String> temp = new ArrayList<>();
+            List<String> list = new ArrayList<>();
 
             temp.add("help");
 
@@ -193,8 +198,10 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                 temp.add("test");
             }
             if (sender.hasPermission("bm.user.money") || sender.hasPermission("bm.user.exp")) {
-                temp.add("money");
-                temp.add("exp");
+                if (sender instanceof Player) {
+                    temp.add("money");
+                    temp.add("exp");
+                }
                 temp.add("stats");
                 temp.add("top");
             }
@@ -205,8 +212,8 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
             return list;
         } else if (args.length > 1) {
-            ArrayList<String> temp = new ArrayList<>();
-            ArrayList<String> list = new ArrayList<>();
+            List<String> temp = new ArrayList<>();
+            List<String> list = new ArrayList<>();
             if (args[0].equals("top") && (sender.hasPermission("bm.user.money") || sender.hasPermission("bm.user.exp"))) {
                 temp.add("NetProfit");
                 temp.add("NetProfit_Exp");
