@@ -58,6 +58,9 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
     ));
     private boolean[] holdPlayerSlots;
     private int maxPlayers;
+    public final Property<String> broadcastBetMoney = property(this, "broadcast.bet-money", "§6♣ %player% 买入 %amount%金币");
+    public final Property<String> broadcastBetExp = property(this, "broadcast.bet-exp", "§6♣ %player% 买入 %amount%经验");
+    public final Property<String> broadcastCashOut = property(this, "broadcast.cash-out", "§6♣ %player% 已抛售，倍率 x%cur_num%");
     public final Property<BustaIcon> btnBankroll = propertyIcon(this, "icons.bankroll", def()
             .slot(45)
             .material(Material.DIAMOND)
@@ -547,13 +550,15 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
 
                 // 如果是第一次下注，向其它玩家广播 有人加入游戏的通知
                 if (firstBet) {
+                    ListPair<String, Object> replacements = new ListPair<>();
+                    replacements.add("%player%", p.getName());
+                    replacements.add("%amount%", doubleFormat.format(old + amount));
+                    String message = color(Pair.replace(broadcastBetMoney.val(), replacements));
                     for (UUID uuid : playerMap.keySet()) {
                         if (playerId.equals(uuid)) continue;
                         try {
                             Player player = Bukkit.getPlayer(uuid);
-                            if (player != null) {
-                                player.sendMessage("§6♣ " + p.getName() + " " + Bet.get() + config.currencySymbol + doubleFormat.format(old + amount));
-                            }
+                            if (player != null) player.sendMessage(message);
                         } catch (Exception ignored) {
                         }
                     }
@@ -581,13 +586,15 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
 
                 // 如果是第一次下注，向其它玩家广播 有人加入游戏的通知
                 if (firstBet) {
+                    ListPair<String, Object> replacements = new ListPair<>();
+                    replacements.add("%player%", p.getName());
+                    replacements.add("%amount%", old + amount);
+                    String message = color(Pair.replace(broadcastBetExp.val(), replacements));
                     for (UUID uuid : playerMap.keySet()) {
                         if (playerId.equals(uuid)) continue;
                         try {
                             Player player = Bukkit.getPlayer(uuid);
-                            if (player != null) {
-                                player.sendMessage("§6♣ " + p.getName() + " " + Bet.get() + " Xp" + (old + amount));
-                            }
+                            if (player != null) player.sendMessage(message);
                         } catch (Exception ignored) {
                         }
                     }
@@ -726,12 +733,13 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         }
 
         // 向游戏中所有玩家广播 抛售通知
+        String message = color(Pair.replace(broadcastCashOut.val(), replacements));
         for (UUID uuid : playerMap.keySet()) {
             if (p.getUniqueId().equals(uuid)) continue;
             try {
                 Player player = Bukkit.getPlayer(uuid);
                 if (player != null) {
-                    player.sendMessage("§6♣ " + p.getName() + " " + CashedOut.get() + " x" + curNumFormatted);
+                    player.sendMessage(message);
                 }
             } catch (Exception ignored) {
             }
