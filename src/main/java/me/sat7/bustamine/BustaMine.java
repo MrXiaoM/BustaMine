@@ -151,6 +151,7 @@ public final class BustaMine extends JavaPlugin {
         setupBank();
         reloadMessages();
         reloadConfig();
+        reloadGUI();
 
         log("Enabled! :)");
 
@@ -201,8 +202,10 @@ public final class BustaMine extends JavaPlugin {
         } catch (IOException e) {
             log(e);
         }
-        game().guiGameShared().reload();
-        game().guiBetSettings().reload();
+    }
+    public void reloadGUI() {
+        game().guiGameShared().reloadConfig();
+        game().guiBetSettings().reloadConfig();
     }
 
     public void updateConfig() {

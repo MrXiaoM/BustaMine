@@ -108,7 +108,11 @@ public class GuiBetSettings extends CustomConfig implements Listener, Property.I
         save();
     }
 
-    public void reload() {
+    public void reloadConfig() {
+        reload();
+        for (Property<?> property : registeredProperties) {
+            property.reload();
+        }
         multiplierMax = config.multiplierMax.val();
     }
 

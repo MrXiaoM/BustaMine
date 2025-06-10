@@ -175,7 +175,11 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         bustaState = BustaState.BET;
     }
 
-    public void reload() {
+    public void reloadConfig() {
+        reload();
+        for (Property<?> property : registeredProperties) {
+            property.reload();
+        }
         betExpSmall = config.betExpSmall.val();
         betExpMedium = config.betExpMedium.val();
         betExpBig = config.betExpBig.val();

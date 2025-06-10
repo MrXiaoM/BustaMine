@@ -124,6 +124,7 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                     }
 
                     plugin.reloadMessages();
+                    plugin.reloadGUI();
                     plugin.updateConfig();
 
                     plugin.game().guiGameShared().gameGUISetup();

@@ -234,7 +234,7 @@ public class GameManager implements Listener {
                     guiGameShared().updateBothIcon(i, nextRoundLore);
                 }
             }
-        }, 0, 20);
+        }, 1L, 20L);
     }
 
     /**
@@ -280,7 +280,7 @@ public class GameManager implements Listener {
                 }
             }
 
-        }, 0, gameLoopDelay);
+        }, 1L, gameLoopDelay);
     }
 
     /**
