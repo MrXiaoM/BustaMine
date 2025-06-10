@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 public enum Messages {
     Message_Prefix("§7[§6§lBustaMine§7]§r "),
     Message_InstantBust("§4立即归零!"),
+    Message_JackpotBust("§a&l已归零! : x%cur_num%"),
+    Message_PlayerBusted("§6♣ %player% &4归零!"),
     Message_Start("§f游戏开始."),
     Message_Stop("§f游戏即将停止."),
     Message_NotEnoughMoney("§e没有足够的金钱."),
@@ -31,7 +33,6 @@ public enum Messages {
     Bal("资金"),
     Bet("下注"),
     CashedOut("出售"),
-    Busted("归零"),
     Income("收入"),
     Expense("费用"),
     Profit("利润"),

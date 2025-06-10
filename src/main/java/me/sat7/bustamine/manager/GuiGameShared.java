@@ -439,7 +439,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                 Bukkit.getServer().broadcastMessage(prefix() + Message_InstantBust.get());
             }
             if (config.broadcastJackpot.val() * 100 <= parent.curNum()) {
-                Bukkit.getServer().broadcastMessage(prefix() + "§a§lBusted! : x" + parent.curNumFormatted());
+                Bukkit.getServer().broadcastMessage(prefix() + Message_JackpotBust.get().replace("%cur_num%", parent.curNumFormatted()));
             }
         }
 
@@ -450,7 +450,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                         Player p1 = Bukkit.getPlayer(uuid);
                         Player p2 = Bukkit.getPlayer(uuidBust);
                         if (p1 != null && p2 != null) {
-                            p1.sendMessage("§6♣ " + p2.getName() + " §4" + Busted.get());
+                            p1.sendMessage(Message_PlayerBusted.get().replace("%player%", p2.getName()));
                         }
                     } catch (Exception ignored) {
                     }

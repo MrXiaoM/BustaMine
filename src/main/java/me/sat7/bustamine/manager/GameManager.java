@@ -25,6 +25,7 @@ import org.bukkit.inventory.ItemStack;
 import java.io.File;
 import java.util.*;
 
+import static me.sat7.bustamine.utils.BustaIcon.color;
 import static me.sat7.bustamine.utils.Util.*;
 
 public class GameManager implements Listener {
@@ -227,7 +228,7 @@ public class GameManager implements Listener {
                 ListPair<String, Object> replacements = new ListPair<>();
                 replacements.add("%time%", betTimeLeft);
                 GuiGameShared gui = guiGameShared();
-                List<String> lore = Pair.replace(gui.btnBetLore.val(), replacements);
+                List<String> lore = color(Pair.replace(gui.btnBetLore.val(), replacements));
 
                 if (betTimeLeft <= 5) gui.drawNumber(betTimeLeft);
 
@@ -251,7 +252,7 @@ public class GameManager implements Listener {
         curNum(100);
         int gameLoopDelay = 4; // 定时器循环时间 (4/20=0.2s)
 
-        bustNum = generateBustNum();
+        bustNum = generateBustNum(); // 生成归零阈值
 
         runCommandRoundStart();
 
