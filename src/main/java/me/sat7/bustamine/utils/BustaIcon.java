@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
@@ -12,13 +13,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class BustaIcon {
+    private final int slot;
     private final Item material;
     private final int amount;
     private final Integer customModelData;
     private final String display;
     private final List<String> lore;
 
-    public BustaIcon(Item material, int amount, Integer customModelData, String display, List<String> lore) {
+    public BustaIcon(int slot, Item material, int amount, Integer customModelData, String display, List<String> lore) {
+        this.slot = slot;
         this.material = material;
         this.amount = amount;
         this.customModelData = customModelData;
@@ -26,8 +29,18 @@ public class BustaIcon {
         this.lore = lore;
     }
 
-    public List<String> getLore() {
-        return lore;
+    public int getSlot() {
+        return slot;
+    }
+
+    public void set(Inventory inv, List<Pair<String, Object>> replacements, String flag) {
+        ItemStack item = generateItem(replacements, flag);
+        inv.setItem(slot, item);
+    }
+
+    public void set(Inventory inv, List<Pair<String, Object>> replacements, @Nullable List<String> newLore, String flag) {
+        ItemStack item = generateItem(replacements, newLore, flag);
+        inv.setItem(slot, item);
     }
 
     public ItemStack generateItem(List<Pair<String, Object>> replacements, String flag) {
@@ -73,6 +86,10 @@ public class BustaIcon {
 
     public static class Builder {
         private final ConfigurationSection section = new MemoryConfiguration();
+        public Builder slot(int slot) {
+            section.set("slot", slot);
+            return this;
+        }
         public Builder material(Material material) {
             section.set("material", material.name().toUpperCase());
             return this;
@@ -97,6 +114,7 @@ public class BustaIcon {
     public static Property<BustaIcon> propertyIcon(CustomConfig cfg, String key, Builder def) {
         return new Property<>(cfg, key, property -> {
             CustomConfig config = property.getConfig();
+            int slot = config.getInt(key + ".slot");
             Item material = Item.fromString(config.getString(key + ".material"), Material.PAPER);
             String display = config.getString(key + ".display");
             int amount = config.getInt(key + ".amount", 1);
@@ -104,7 +122,7 @@ public class BustaIcon {
                     ? config.getInt(key + ".custom-model-data")
                     : null;
             List<String> lore = config.get().getStringList(key + ".lore");
-            return new BustaIcon(material, amount, customModelData, display, lore);
+            return new BustaIcon(slot, material, amount, customModelData, display, lore);
         }, def.build());
     }
 }

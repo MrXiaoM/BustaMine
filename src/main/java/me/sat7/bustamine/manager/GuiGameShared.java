@@ -65,14 +65,17 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                     "&e最大倍数: x%max_multi%"
             ));
     public final Property<BustaIcon> btnMyState = propertyIcon(this, "icons.my-state", def()
+            .slot(47)
             .material(Material.PAPER)
             .display("&6&l我的交易状态")
             .lore());
     public final Property<BustaIcon> btnHistory = propertyIcon(this, "icons.history", def()
+            .slot(48)
             .material(Material.PAPER)
             .display("&6&l历史倍数")
             .lore());
     public final Property<BustaIcon> btnCashOut = propertyIcon(this, "icons.cash-out", def()
+            .slot(49)
             .material(Material.EMERALD)
             .display("&6&l抛售")
             .lore());
@@ -83,30 +86,37 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             "&c&lx%cur_num%"
     ));
     public final Property<BustaIcon> btnCashOutSetting = propertyIcon(this, "icons.cash-out-setting", def()
+            .slot(50)
             .material(Material.PAPER)
             .display("&6&l自动抛售")
             .lore());
     public final Property<BustaIcon> btnBetMoneySmall = propertyIcon(this, "icons.bet-money-small", def()
+            .slot(51)
             .material(Material.GOLD_NUGGET)
             .display("&6&l买入 &e%money%金币")
             .lore());
     public final Property<BustaIcon> btnBetMoneyMedium = propertyIcon(this, "icons.bet-money-medium", def()
+            .slot(52)
             .material(Material.GOLD_INGOT)
             .display("&6&l买入 &e%money%金币")
             .lore());
     public final Property<BustaIcon> btnBetMoneyBig = propertyIcon(this, "icons.bet-money-big", def()
+            .slot(53)
             .material(Material.GOLD_BLOCK)
             .display("&6&l买入 &e%money%金币")
             .lore());
     public final Property<BustaIcon> btnBetExpSmall = propertyIcon(this, "icons.bet-exp-small", def()
+            .slot(51)
             .material(Material.GOLD_NUGGET)
             .display("&6&l买入 &e%money%经验")
             .lore());
     public final Property<BustaIcon> btnBetExpMedium = propertyIcon(this, "icons.bet-exp-medium", def()
+            .slot(52)
             .material(Material.GOLD_INGOT)
             .display("&6&l买入 &e%money%经验")
             .lore());
     public final Property<BustaIcon> btnBetExpBig = propertyIcon(this, "icons.bet-exp-big", def()
+            .slot(53)
             .material(Material.GOLD_BLOCK)
             .display("&6&l买入 &e%money%经验")
             .lore());
@@ -172,8 +182,6 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         betMoneySmall = config.betSmall.val();
         betMoneyMedium = config.betMedium.val();
         betMoneyBig = config.betBig.val();
-
-        refreshIcons();
     }
 
     public void gameGUISetup() {
@@ -245,10 +253,10 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         }
         Inventory inv = new BustaGuiHolder(type, 54, title).getInventory();
 
-        inv.setItem(47, btnMyState.val().generateItem(null, "my state"));
-        inv.setItem(48, btnHistory.val().generateItem(null, "history"));
-        inv.setItem(49, btnCashOut.val().generateItem(null, "cash out"));
-        inv.setItem(50, btnCashOutSetting.val().generateItem(null, "show bet setting"));
+        btnMyState.val().set(inv, null, "my state");
+        btnHistory.val().set(inv, null, "history");
+        btnCashOut.val().set(inv, null, "cash out");
+        btnCashOutSetting.val().set(inv, null, "show bet setting");
 
         if (type == BustaType.MONEY) {
             gameInventory = inv;
@@ -287,31 +295,31 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
 
         // 添加下注按钮
         // 10
-        setMoneyIcon(51, btnBetMoneySmall.val().generateItem(
+        btnBetMoneySmall.val().set(gameInventory,
                 Lists.newArrayList(Pair.of("%money%", config.betSmall)),
-                "bet:small"));
-        setExpIcon(51, btnBetExpSmall.val().generateItem(
+                "bet:small");
+        btnBetExpSmall.val().set(gameInventory_exp,
                 Lists.newArrayList(Pair.of("%money%", config.betExpSmall)),
-                "bet:small"));
+                "bet:small");
 
         // 100
-        setMoneyIcon(52, btnBetMoneyMedium.val().generateItem(
+        btnBetMoneyMedium.val().set(gameInventory,
                 Lists.newArrayList(Pair.of("%money%", config.betMedium)),
-                "bet:medium"));
-        setExpIcon(52, btnBetExpMedium.val().generateItem(
+                "bet:medium");
+        btnBetExpMedium.val().set(gameInventory_exp,
                 Lists.newArrayList(Pair.of("%money%", config.betExpMedium)),
-                "bet:medium"));
+                "bet:medium");
 
         // 1000
-        setMoneyIcon(53, btnBetMoneyBig.val().generateItem(
+        btnBetMoneyBig.val().set(gameInventory,
                 Lists.newArrayList(Pair.of("%money%", config.betBig)),
-                "bet:big"));
-        setExpIcon(53, btnBetExpBig.val().generateItem(
+                "bet:big");
+        btnBetExpBig.val().set(gameInventory_exp,
                 Lists.newArrayList(Pair.of("%money%", config.betExpBig)),
-                "bet:big"));
+                "bet:big");
 
         // 更新抛售图标的 lore 为买入提示
-        updateBothIcon(49, btnCashOutLoreBet.val());
+        updateBothIcon(btnCashOut.val().getSlot(), btnCashOutLoreBet.val());
     }
 
     public void openGameGUI(Player p, BustaType type) {
@@ -319,23 +327,6 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             p.openInventory(gameInventory);
         } else {
             p.openInventory(gameInventory_exp);
-        }
-    }
-
-    private void refreshIcons() {
-        String[] iconIds = new String[]{"Bankroll", "WinChance", "MyState", "History", "CashOut"};
-        //45 46 47 48 49
-        for (int i = 45; i <= 49; i++) {
-            ItemStack oldItem = getMoneyIcon(i);
-            if (oldItem == null) continue;
-
-            ItemMeta meta = oldItem.getItemMeta();
-
-            String material = plugin.config().getString("BtnIcon." + iconIds[i - 45]);
-            ItemStack item = Item.fromString(material, Material.PAPER).newItem(oldItem.getAmount());
-            item.setItemMeta(meta);
-
-            setBothIcon(i, item);
         }
     }
 
@@ -466,9 +457,8 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             }
         }
 
-        ListPair<String, Object> replacements = new ListPair<>();
-        replacements.add("%cur_num%", parent.curNumFormatted());
-        updateBothIcon(49, Pair.replace(btnCashOutLoreGame.val(), replacements));
+        // 更新当前倍率到 lore
+        updateCurNumToCashIcon();
 
         for (int i = 0; i < 45; i++) {
             if (!headPos.containsValue(i)) {
@@ -483,7 +473,21 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         history.add(parent.curNum());
         if (history.size() > 16) history.remove(0);
 
-        ArrayList<String> historyLore = new ArrayList<>();
+        updateHistoryIcon();
+
+        plugin.bank().save();
+        plugin.users().save();
+    }
+
+    public void updateCurNumToCashIcon() {
+        ListPair<String, Object> replacements = new ListPair<>();
+        replacements.add("%cur_num%", parent.curNumFormatted());
+        updateBothIcon(btnCashOut.val().getSlot(), Pair.replace(btnCashOutLoreGame.val(), replacements));
+    }
+
+    public void updateHistoryIcon() {
+        List<String> historyLore = new ArrayList<>();
+        // TODO: 转移到配置文件
         for (int i : history) {
             if (i >= 200) {
                 historyLore.add("§ax" + doubleFormat.format(i / 100.0));
@@ -491,11 +495,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                 historyLore.add("§cx" + doubleFormat.format(i / 100.0));
             }
         }
-
-        updateBothIcon(48, historyLore);
-
-        plugin.bank().save();
-        plugin.users().save();
+        updateBothIcon(btnHistory.val().getSlot(), historyLore);
     }
 
     /**
@@ -607,7 +607,6 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             User user = plugin.users().get(p);
             user.setGamesPlayed(user.getGamesPlayed() + 1);
 
-            // TODO: 虽然玩家不至于很多，但应该要做一个翻页机制
             if (playerMap.size() < 43) {
                 int idx = playerMap.size() - 1;
                 ItemStack skull = Util.getPlayerHeadItem();

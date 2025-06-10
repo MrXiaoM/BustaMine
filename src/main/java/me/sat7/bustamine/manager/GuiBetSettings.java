@@ -36,6 +36,7 @@ public class GuiBetSettings extends CustomConfig implements Listener, Property.I
     private final Config config;
 
     public final Property<BustaIcon> btnStateEnabled = propertyIcon(this, "icons.state-enabled", def()
+            .slot(13)
             .material(Material.GREEN_STAINED_GLASS_PANE)
             .display("&6&l开/关")
             .lore(
@@ -43,6 +44,7 @@ public class GuiBetSettings extends CustomConfig implements Listener, Property.I
                     "&e点击进行操作"
             ));
     public final Property<BustaIcon> btnStateDisabled = propertyIcon(this, "icons.state-enabled", def()
+            .slot(13)
             .material(Material.RED_STAINED_GLASS_PANE)
             .display("&6&l开/关")
             .lore(
@@ -50,21 +52,27 @@ public class GuiBetSettings extends CustomConfig implements Listener, Property.I
                     "&e点击进行操作"
             ));
     public final Property<BustaIcon> btnMinus1000 = propertyIcon(this, "icons.minus-1000", def()
+            .slot(10)
             .material(Material.GOLD_NUGGET)
             .display("&6&l-10"));
     public final Property<BustaIcon> btnMinus100 = propertyIcon(this, "icons.minus-100", def()
+            .slot(11)
             .material(Material.GOLD_NUGGET)
             .display("&6&l-1"));
     public final Property<BustaIcon> btnMinus10 = propertyIcon(this, "icons.minus-10", def()
+            .slot(12)
             .material(Material.GOLD_NUGGET)
             .display("&6&l-0.1"));
     public final Property<BustaIcon> btnPlus10 = propertyIcon(this, "icons.plus-10", def()
+            .slot(14)
             .material(Material.GOLD_NUGGET)
             .display("&6&l+0.1"));
     public final Property<BustaIcon> btnPlus100 = propertyIcon(this, "icons.plus-100", def()
+            .slot(15)
             .material(Material.GOLD_NUGGET)
             .display("&6&l+1"));
     public final Property<BustaIcon> btnPlus1000 = propertyIcon(this, "icons.plus-1000", def()
+            .slot(16)
             .material(Material.GOLD_NUGGET)
             .display("&6&l+10"));
     public final Property<List<String>> btnLoreEnabled = property(this, "btn-lore-enabled", Lists.newArrayList(
@@ -139,18 +147,18 @@ public class GuiBetSettings extends CustomConfig implements Listener, Property.I
         if (user.getAutoCashOut() >= 0) {
             replacements.add("%auto_cash_out%", String.format("%.2f", (user.getAutoCashOut() / 100.0)));
             btnLore = btnLoreEnabled.val();
-            inv.setItem(13, btnStateEnabled.val().generateItem(replacements, "state"));
+            btnStateEnabled.val().set(inv, replacements, "state");
         } else {
             btnLore = btnLoreDisabled.val();
-            inv.setItem(13, btnStateDisabled.val().generateItem(replacements, "state"));
+            btnStateDisabled.val().set(inv, replacements, "state");
         }
 
-        inv.setItem(10, btnMinus1000.val().generateItem(replacements, btnLore, "mod:-1000"));
-        inv.setItem(11, btnMinus100.val().generateItem(replacements, btnLore, "mod:-100"));
-        inv.setItem(12, btnMinus10.val().generateItem(replacements, btnLore, "mod:-10"));
-        inv.setItem(14, btnPlus10.val().generateItem(replacements, btnLore, "mod:+10"));
-        inv.setItem(15, btnPlus100.val().generateItem(replacements, btnLore, "mod:+100"));
-        inv.setItem(16, btnPlus1000.val().generateItem(replacements, btnLore, "mod:+1000"));
+        btnMinus1000.val().set(inv, replacements, btnLore, "mod:-1000");
+        btnMinus100.val().set(inv, replacements, btnLore, "mod:-100");
+        btnMinus10.val().set(inv, replacements, btnLore, "mod:-10");
+        btnPlus10.val().set(inv, replacements, btnLore, "mod:+10");
+        btnPlus100.val().set(inv, replacements, btnLore, "mod:+100");
+        btnPlus1000.val().set(inv, replacements, btnLore, "mod:+1000");
 
         p.openInventory(inv);
     }

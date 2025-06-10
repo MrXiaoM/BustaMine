@@ -83,8 +83,6 @@ public class GameManager implements Listener {
     public void reload() {
         maxMulti = config.multiplierMax.val();
         baseInstantBust = Math.max(0, config.probabilityOfInstaBust.val() / 100 - odd(maxMulti - 1));
-        guiGameShared().reload();
-        guiBetSettings().reload();
     }
 
     public void setGameEnable(boolean gameEnable) {
@@ -269,11 +267,8 @@ public class GameManager implements Listener {
                 return;
             }
 
-            // 更新当前数量到 lore
-            List<String> newLore = new ArrayList<>();
-            newLore.add("§a§lx" + curNumFormatted());
-
-            guiGameShared().updateBothIcon(49, newLore);
+            // 更新当前倍率到 lore
+            guiGameShared().updateCurNumToCashIcon();
 
             if (config.isForceUpdateUI.val()) {
                 // 强制更新玩家界面

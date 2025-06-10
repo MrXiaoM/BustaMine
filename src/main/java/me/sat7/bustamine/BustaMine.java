@@ -201,6 +201,8 @@ public final class BustaMine extends JavaPlugin {
         } catch (IOException e) {
             log(e);
         }
+        game().guiGameShared().reload();
+        game().guiBetSettings().reload();
     }
 
     public void updateConfig() {
