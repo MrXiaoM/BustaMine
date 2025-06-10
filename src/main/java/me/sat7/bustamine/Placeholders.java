@@ -102,6 +102,7 @@ public class Placeholders extends PlaceholderExpansion {
                             return key == null ? "" : key;
                         }
                         case "value": {
+                            if (key == null) return "";
                             double value = sort.get(key);
                             if (realType.equals("NetProfit")) {
                                 return doubleFormat.format(value);
