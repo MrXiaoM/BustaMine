@@ -19,8 +19,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 
 import static me.sat7.bustamine.config.Messages.*;
-import static me.sat7.bustamine.utils.Util.createItemStack;
-import static me.sat7.bustamine.utils.Util.getGlass;
+import static me.sat7.bustamine.utils.Util.*;
 
 public class GuiBetSettings implements Listener {
     private final BustaMine plugin;
@@ -52,6 +51,7 @@ public class GuiBetSettings implements Listener {
                 meta.setLore(btnGameLore);
                 btnMoneyGame.setItemMeta(meta);
             }
+            flag(btnMoneyGame, "back:money");
             inv.setItem(18, btnMoneyGame);
         }
 
@@ -63,6 +63,7 @@ public class GuiBetSettings implements Listener {
                 meta.setLore(btnGameLore);
                 btnExpGame.setItemMeta(meta);
             }
+            flag(btnMoneyGame, "back:exp");
             inv.setItem(26, btnExpGame);
         }
 
@@ -86,31 +87,38 @@ public class GuiBetSettings implements Listener {
             stateMeta.setLore(btnLore);
             state.setItemMeta(stateMeta);
         }
+        flag(state, "state");
         inv.setItem(13, state);
 
         // -10
         ItemStack btnBigMinus10 = createItemStack(config.btnBetBig, null,
                 CO_Minus10.get(), btnLore, 1);
+        flag(btnBigMinus10, "mod:-1000");
         inv.setItem(10, btnBigMinus10);
         // -1
         ItemStack btnMediumMinus1 = createItemStack(config.btnBetMedium, null,
                 CO_Minus1.get(), btnLore, 1);
+        flag(btnMediumMinus1, "mod:-100");
         inv.setItem(11, btnMediumMinus1);
         // -0.1
         ItemStack BtnSmallMinus01 = createItemStack(config.btnBetSmall, null,
                 CO_Minus01.get(), btnLore, 1);
+        flag(BtnSmallMinus01, "mod:-10");
         inv.setItem(12, BtnSmallMinus01);
         // +0.1
         ItemStack btnSmallPlus01 = createItemStack(config.btnBetSmall, null,
                 CO_Plus01.get(), btnLore, 1);
+        flag(btnSmallPlus01, "mod:+10");
         inv.setItem(14, btnSmallPlus01);
         // +1
         ItemStack btnMediumPlus1 = createItemStack(config.btnBetMedium, null,
                 CO_Plus1.get(), btnLore, 1);
+        flag(btnMediumPlus1, "mod:+100");
         inv.setItem(15, btnMediumPlus1);
         // +10
         ItemStack btnBigPlus10 = createItemStack(config.btnBetBig, null,
                 CO_Plus10.get(), btnLore, 1);
+        flag(btnBigPlus10, "mod:+1000");
         inv.setItem(16, btnBigPlus10);
 
         p.openInventory(inv);
@@ -118,65 +126,60 @@ public class GuiBetSettings implements Listener {
 
 
     @EventHandler
+    @SuppressWarnings({"IfCanBeSwitch", "UnnecessaryReturnStatement"})
     public void onClick(InventoryClickEvent e) {
         if (e.isCancelled() || !(e.getWhoClicked() instanceof Player)) return;
         InventoryView view = e.getView();
         Player player = (Player) e.getWhoClicked();
         if (view.getTopInventory().getHolder() instanceof BetGuiHolder) {
             e.setCancelled(true);
-            if (e.getClickedInventory() == null) return;
+            ItemStack item = e.getCurrentItem();
+            if (e.getClickedInventory() == null || item == null) return;
 
-
-            if (e.getSlot() == 18) {
+            String flag = flag(item);
+            if (flag.equals("back:money")) { // 18
                 if (player.hasPermission("bm.user.money")) {
                     parent.guiGameShared().openGameGUI(player, BustaType.MONEY);
                 } else {
                     Message_NoPermission.t(player);
                 }
-            } else if (e.getSlot() == 26) {
+                return;
+            }
+            if (flag.equals("back:exp")) { // 26
                 if (player.hasPermission("bm.user.exp")) {
                     parent.guiGameShared().openGameGUI(player, BustaType.EXP);
                 } else {
                     Message_NoPermission.t(player);
                 }
+                return;
             }
-            else if (e.getSlot() >= 10 || e.getSlot() <= 16) {
+            if (flag.equals("state")) { // 13
                 User user = plugin.users().get(player);
-                int mod = 0;
-
-                if (e.getSlot() == 13) {
-                    if (user.getCashOut() >= 0) {
-                        user.setCashOut(-1);
-                    } else {
-                        user.setLastJoin(200);
-                    }
-                    showBetSettingUI(player);
-                    return;
-                } else if (e.getSlot() == 10) {
-                    mod = -1000;
-                } else if (e.getSlot() == 11) {
-                    mod = -100;
-                } else if (e.getSlot() == 12) {
-                    mod = -10;
-                } else if (e.getSlot() == 14) {
-                    mod = 10;
-                } else if (e.getSlot() == 15) {
-                    mod = 100;
-                } else if (e.getSlot() == 16) {
-                    mod = 1000;
+                if (user.getCashOut() >= 0) {
+                    user.setCashOut(-1);
+                } else {
+                    user.setCashOut(200);
                 }
-
-                int temp = user.getCashOut();
-                int target = temp + mod;
-                if (target < 110) {
-                    target = 110;
-                }
-                if (target > multiplierMax * 100) {
-                    target = multiplierMax * 100;
-                }
-
-                user.setCashOut(target);
                 showBetSettingUI(player);
+                return;
+            }
+            if (flag.startsWith("mod:")) { // 10, 11, 12  |  14, 15, 16
+                Integer mod = parseInt(flag.substring(4)).orElse(null);
+                if (mod != null) {
+                    User user = plugin.users().get(player);
+
+                    int target = user.getCashOut() + mod;
+                    if (target < 110) {
+                        target = 110;
+                    }
+                    if (target > multiplierMax * 100) {
+                        target = multiplierMax * 100;
+                    }
+
+                    user.setCashOut(target);
+                    showBetSettingUI(player);
+                }
+                return;
             }
         }
     }

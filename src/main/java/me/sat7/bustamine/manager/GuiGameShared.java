@@ -260,7 +260,7 @@ public class GuiGameShared implements Listener {
     }
 
     @EventHandler
-    @SuppressWarnings("IfCanBeSwitch")
+    @SuppressWarnings({"IfCanBeSwitch", "UnnecessaryReturnStatement"})
     public void onClick(InventoryClickEvent e) {
         if (e.isCancelled() || !(e.getWhoClicked() instanceof Player)) return;
         InventoryView view = e.getView();
@@ -272,6 +272,7 @@ public class GuiGameShared implements Listener {
             BustaType type = ((BustaGuiHolder) view.getTopInventory().getHolder()).getType();
 
             plugin.sounds().play(player, "Click");
+
             String flag = flag(item);
             if (flag.startsWith("bet:")) { // 51, 52, 53
                 int amount;
