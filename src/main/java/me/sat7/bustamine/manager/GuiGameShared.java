@@ -47,6 +47,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
     private final Config config;
 
     public final Property<BustaIcon> btnBankroll = propertyIcon(this, "icons.bankroll", def()
+            .slot(45)
             .material(Material.DIAMOND)
             .display("&6&l资金")
             .lore(
@@ -54,6 +55,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                     "&eXp%bank_exp%K"
             ));
     public final Property<BustaIcon> btnWinChance = propertyIcon(this, "icons.win-chance", def()
+            .slot(46)
             .material(Material.PAPER)
             .display("&6&l获胜几率")
             .lore(
@@ -271,6 +273,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
 
     public void updateStartGameUI() {
         // 显示胜率公示
+        BustaIcon btnWinChance = this.btnWinChance.val();
         if (config.isShowWinChance.val()) {
             int maxMulti = parent.maxMulti;
             double baseInstantBust = parent.baseInstantBust;
@@ -282,11 +285,11 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             replacements.add("%x12%", doubleFormat.format((odd(11) - bustChance) * 100 * (1 - baseInstantBust)));
             replacements.add("%instant_bust%", doubleFormat.format((bustChance + baseInstantBust) * 100));
             replacements.add("%max_multi%", maxMulti);
-            ItemStack winChance = btnWinChance.val().generateItem(replacements, "win chance");
+            ItemStack winChance = btnWinChance.generateItem(replacements, "win chance");
 
-            setBothIcon(46, winChance);
+            setBothIcon(btnWinChance.getSlot(), winChance);
         } else {
-            setBothIcon(46, null);
+            setBothIcon(btnWinChance.getSlot(), null);
         }
 
         // 显示资金
@@ -294,7 +297,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             parent.updateBankroll(BustaType.MONEY, 0);
             parent.updateBankroll(BustaType.EXP, 0);
         } else {
-            setBothIcon(45, null);
+            setBothIcon(btnBankroll.val().getSlot(), null);
         }
 
         // 添加下注按钮

@@ -7,6 +7,7 @@ import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaState;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.IBustaMineGui;
+import me.sat7.bustamine.utils.BustaIcon;
 import me.sat7.bustamine.utils.ListPair;
 import me.sat7.bustamine.utils.Util;
 import org.bukkit.Bukkit;
@@ -301,8 +302,9 @@ public class GameManager implements Listener {
             ListPair<String, Object> replacements = new ListPair<>();
             replacements.add("%bank_money%", plugin.bank().getDouble("Bankroll.Money"));
             replacements.add("%bank_exp%", plugin.bank().getInt("Bankroll.Exp"));
-            ItemStack item = guiGameShared().btnBankroll.val().generateItem(replacements, "bankroll");
-            guiGameShared().setBothIcon(45, item);
+            BustaIcon btnBankroll = guiGameShared().btnBankroll.val();
+            ItemStack item = btnBankroll.generateItem(replacements, "bankroll");
+            guiGameShared().setBothIcon(btnBankroll.getSlot(), item);
         }
 
         // 更新统计数据
