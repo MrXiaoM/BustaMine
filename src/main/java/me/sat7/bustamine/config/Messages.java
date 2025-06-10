@@ -4,6 +4,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
+import static me.sat7.bustamine.utils.BustaIcon.color;
+
 public enum Messages {
     Message_Prefix("§7[§6§lBustaMine§7]§r "),
     Message_InstantBust("§4立即归零!"),
@@ -13,8 +15,8 @@ public enum Messages {
     Message_Stop("§f游戏即将停止."),
     Message_NotEnoughMoney("§e没有足够的金钱."),
     Message_NotEnoughExp("§e没有足够的经验."),
-    Message_DivUpper("§6╔══════════════╗"),
-    Message_DivLower("§6╚══════════════╝"),
+    Message_DivUpper("§6╔══════════════╗", false),
+    Message_DivLower("§6╚══════════════╝", false),
     Message_NoPermission("§e你无权使用此命令."),
     Message_Reload_Normal("§f插件配置已重载."),
     Message_Reload_FromNextRound("§f插件配置已重载，将在下一轮游戏生效."),
@@ -44,13 +46,18 @@ public enum Messages {
 
     ;
     private static String prefix = "";
+    private final boolean needPrefix;
     private final String key;
     private final String defaultValue;
     private String currentValue;
     Messages(String defaultValue) {
+        this(defaultValue, true);
+    }
+    Messages(String defaultValue, boolean needPrefix) {
         this.key = name().replace("_", ".");
-        this.defaultValue = defaultValue;
-        this.currentValue = defaultValue;
+        this.defaultValue = color(defaultValue);
+        this.currentValue = this.defaultValue;
+        this.needPrefix = needPrefix;
     }
 
     public String get() {
@@ -58,7 +65,12 @@ public enum Messages {
     }
 
     public boolean t(@NotNull CommandSender sender) {
-        return msg(sender, get());
+        if (needPrefix) {
+            return msg(sender, get());
+        } else {
+            sender.sendMessage(get());
+            return true;
+        }
     }
 
     public static String prefix() {
@@ -69,7 +81,7 @@ public enum Messages {
         boolean updated = false;
         for (Messages message : values()) {
             if (config.contains(message.key)) {
-                message.currentValue = config.getString(message.key, message.defaultValue);
+                message.currentValue = color(config.getString(message.key, message.defaultValue));
             } else {
                 message.currentValue = message.defaultValue;
                 config.set(message.key, message.defaultValue);
