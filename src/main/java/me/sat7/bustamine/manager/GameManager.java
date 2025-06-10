@@ -9,11 +9,17 @@ import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.IBustaMineGui;
 import me.sat7.bustamine.utils.Util;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -22,7 +28,7 @@ import java.util.*;
 import static me.sat7.bustamine.config.Messages.*;
 import static me.sat7.bustamine.utils.Util.*;
 
-public class GameManager {
+public class GameManager implements Listener {
     private final BustaMine plugin;
     private WrappedTask bustaTask;
     private boolean gameEnable;
@@ -49,6 +55,7 @@ public class GameManager {
         this.config = plugin.config();
         this.guiGameShared = new GuiGameShared(this);
         this.guiBetSettings = new GuiBetSettings(this);
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     public GuiGameShared guiGameShared() {
@@ -402,6 +409,60 @@ public class GameManager {
         } else {
             double old = user.getNetProfitExp();
             user.setNetProfitExp((int) (old + amount));
+        }
+    }
+
+    private boolean isBustaGui(InventoryView view) {
+        return view.getTopInventory().getHolder() instanceof IBustaMineGui;
+    }
+
+    @EventHandler
+    public void onClick(InventoryClickEvent e) {
+        if (e.isCancelled()) return;
+        ItemStack item = e.getCurrentItem();
+        if (item == null || isBustaGui(e.getView())) return;
+        if (!flag(item).isEmpty()) {
+            item.setType(Material.AIR);
+            e.setCurrentItem(null);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent e) {
+        Player player = e.getPlayer();
+        ItemStack item = e.getItem();
+        if (item != null && !isBustaGui(player.getOpenInventory())) {
+            if (!flag(item).isEmpty()) {
+                item.setType(Material.AIR);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDrop(PlayerDropItemEvent e) {
+        if (e.isCancelled()) return;
+        Player player = e.getPlayer();
+        if (isBustaGui(player.getOpenInventory())) return;
+        ItemStack item = e.getItemDrop().getItemStack();
+        if (!flag(item).isEmpty()) {
+            item.setType(Material.AIR);
+            e.getItemDrop().remove();
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerPickup(EntityPickupItemEvent e) {
+        if (e.isCancelled()) return;
+        Entity entity = e.getEntity();
+        if (entity instanceof Player) {
+            if (isBustaGui(((Player) entity).getOpenInventory())) return;
+        }
+        ItemStack item = e.getItem().getItemStack();
+        if (!flag(item).isEmpty()) {
+            item.setType(Material.AIR);
+            e.getItem().remove();
+            e.setCancelled(true);
         }
     }
 }
