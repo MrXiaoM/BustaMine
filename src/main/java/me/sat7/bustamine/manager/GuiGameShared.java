@@ -28,8 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static me.sat7.bustamine.BustaMine.log;
 import static me.sat7.bustamine.config.Messages.*;
-import static me.sat7.bustamine.utils.BustaIcon.def;
-import static me.sat7.bustamine.utils.BustaIcon.propertyIcon;
+import static me.sat7.bustamine.utils.BustaIcon.*;
 import static me.sat7.bustamine.utils.Property.property;
 import static me.sat7.bustamine.utils.Util.*;
 
@@ -46,6 +45,19 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
     private final GameManager parent;
     private final Config config;
 
+    public final Property<String> titleMoney = property(this, "title-money", "&2[ Busta Mine ] &3金币");
+    public final Property<String> titleExp = property(this, "title-exp", "&2[ Busta Mine ] &3经验");
+    public final Property<Integer> inventorySize = property(this, "inventory-size", 54);
+    private final Property<List<String>> holdPlayerArea = property(this, "hold-player-area", Lists.newArrayList(
+            "#########",
+            "#########",
+            "#########",
+            "#########",
+            "#########",
+            "         "
+    ));
+    private boolean[] holdPlayerSlots;
+    private int maxPlayers;
     public final Property<BustaIcon> btnBankroll = propertyIcon(this, "icons.bankroll", def()
             .slot(45)
             .material(Material.DIAMOND)
@@ -182,6 +194,17 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         for (Property<?> property : registeredProperties) {
             property.reload();
         }
+        char[] inventory = String.join("", holdPlayerArea.val()).toCharArray();
+        holdPlayerSlots = new boolean[inventory.length];
+        maxPlayers = 0;
+        for (int i = 0; i < inventory.length; i++) {
+            boolean isInArea = inventory[i] == '#';
+            holdPlayerSlots[i] = isInArea;
+            if (isInArea) {
+                maxPlayers++;
+            }
+        }
+
         betExpSmall = config.betExpSmall.val();
         betExpMedium = config.betExpMedium.val();
         betExpBig = config.betExpBig.val();
@@ -196,68 +219,18 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         createGameGUI(BustaType.EXP);
     }
 
-    public void updateBothIcon(int index, List<String> lore) {
-        ItemStack item1 = gameInventory.getItem(index);
-        ItemStack item2 = gameInventory_exp.getItem(index);
-        ItemMeta meta1 = item1 == null ? null : item1.getItemMeta();
-        ItemMeta meta2 = item2 == null ? null : item2.getItemMeta();
-        if (meta1 != null) {
-            meta1.setLore(lore);
-            item1.setItemMeta(meta1);
-        }
-        if (meta2 != null) {
-            meta2.setLore(lore);
-            item2.setItemMeta(meta2);
-        }
-    }
-
-    public void setBothIcon(int index, ItemStack item) {
-        setMoneyIcon(index, item);
-        setExpIcon(index, item);
-    }
-
-    public ItemStack getMoneyIcon(int index) {
-        return gameInventory.getItem(index);
-    }
-
-    public void setMoneyIcon(int index, ItemStack item) {
-        gameInventory.setItem(index, item);
-    }
-
-    public void setExpIcon(int index, ItemStack item) {
-        gameInventory_exp.setItem(index, item);
-    }
-
-    public Set<UUID> activePlayers() {
-        return activePlayerMap.keySet();
-    }
-
-    public Set<UUID> inGamePlayers() {
-        return playerMap.keySet();
-    }
-
-    public void restoreOldIcons() {
-        for (Integer key : old.keySet()) {
-            setBothIcon(key, old.get(key));
-        }
-    }
-
-    public boolean containsHeadSlot(int slot) {
-        return headPos.containsValue(slot);
-    }
-
     public void setBustaState(BustaState bustaState) {
         this.bustaState = bustaState;
     }
 
     private void createGameGUI(BustaType type) {
-        String title = UI_Title.get();
+        String title;
         if (type == BustaType.MONEY) {
-            title = title + " " + Money.get();
+            title = titleMoney.val();
         } else {
-            title = title + " " + Exp.get();
+            title = titleExp.val();
         }
-        Inventory inv = new BustaGuiHolder(type, 54, title).getInventory();
+        Inventory inv = new BustaGuiHolder(type, inventorySize.val(), color(title)).getInventory();
 
         btnMyState.val().set(inv, null, "my state");
         btnHistory.val().set(inv, null, "history");
@@ -520,6 +493,11 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             return;
         }
 
+        if (playerMap.size() >= getMaxPlayers()) {
+            PlayerCountLimit.t(p);
+            return;
+        }
+
         // 是否第一次下注
         boolean firstBet = !activePlayerMap.containsKey(p.getUniqueId());
         // 之前已下注数量
@@ -614,8 +592,8 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             User user = plugin.users().get(p);
             user.setGamesPlayed(user.getGamesPlayed() + 1);
 
-            if (playerMap.size() < 43) {
-                int idx = playerMap.size() - 1;
+            int idx = getNextPlayerSlot();
+            if (idx >= 0) {
                 ItemStack skull = Util.getPlayerHeadItem();
                 ItemMeta meta = skull.getItemMeta();
 
@@ -737,5 +715,72 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
 
         parent.updateBankroll(playerMap.get(p.getUniqueId()), -prize);
         parent.updateNetProfit(p, playerMap.get(p.getUniqueId()), prize);
+    }
+
+    public void updateBothIcon(int index, List<String> lore) {
+        ItemStack item1 = gameInventory.getItem(index);
+        ItemStack item2 = gameInventory_exp.getItem(index);
+        ItemMeta meta1 = item1 == null ? null : item1.getItemMeta();
+        ItemMeta meta2 = item2 == null ? null : item2.getItemMeta();
+        if (meta1 != null) {
+            meta1.setLore(lore);
+            item1.setItemMeta(meta1);
+        }
+        if (meta2 != null) {
+            meta2.setLore(lore);
+            item2.setItemMeta(meta2);
+        }
+    }
+
+    public void setBothIcon(int index, ItemStack item) {
+        setMoneyIcon(index, item);
+        setExpIcon(index, item);
+    }
+
+    public ItemStack getMoneyIcon(int index) {
+        return gameInventory.getItem(index);
+    }
+
+    public void setMoneyIcon(int index, ItemStack item) {
+        gameInventory.setItem(index, item);
+    }
+
+    public void setExpIcon(int index, ItemStack item) {
+        gameInventory_exp.setItem(index, item);
+    }
+
+    public Set<UUID> activePlayers() {
+        return activePlayerMap.keySet();
+    }
+
+    public Set<UUID> inGamePlayers() {
+        return playerMap.keySet();
+    }
+
+    public void restoreOldIcons() {
+        for (Integer key : old.keySet()) {
+            setBothIcon(key, old.get(key));
+        }
+    }
+
+    public boolean containsHeadSlot(int slot) {
+        return headPos.containsValue(slot);
+    }
+
+    public int getMaxPlayers() {
+        return maxPlayers;
+    }
+
+    public boolean isInPlayerArea(int slot) {
+        return holdPlayerSlots[slot];
+    }
+
+    public int getNextPlayerSlot() {
+        for (int i = 0; i < holdPlayerSlots.length; i++) {
+            if (holdPlayerSlots[i] && !containsHeadSlot(i)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

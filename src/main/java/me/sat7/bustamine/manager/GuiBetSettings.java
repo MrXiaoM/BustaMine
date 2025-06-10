@@ -19,14 +19,12 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static me.sat7.bustamine.config.Messages.*;
-import static me.sat7.bustamine.utils.BustaIcon.def;
-import static me.sat7.bustamine.utils.BustaIcon.propertyIcon;
+import static me.sat7.bustamine.utils.BustaIcon.*;
 import static me.sat7.bustamine.utils.Property.property;
 import static me.sat7.bustamine.utils.Util.*;
 
@@ -35,6 +33,18 @@ public class GuiBetSettings extends CustomConfig implements Listener, Property.I
     private final GameManager parent;
     private final Config config;
 
+    public final Property<String> title = property(this, "title", "&2[ 自动抛售 ]");
+    public final Property<Integer> inventorySize = property(this, "inventory-size", 27);
+    public final Property<BustaIcon> btnBackMoneyGame = propertyIcon(this, "icons.back-money-game", def()
+            .slot(18)
+            .material(Material.BLUE_STAINED_GLASS_PANE)
+            .display("&6&l返回金钱交易")
+            .lore());
+    public final Property<BustaIcon> btnBackExpGame = propertyIcon(this, "icons.back-money-game", def()
+            .slot(26)
+            .material(Material.BLUE_STAINED_GLASS_PANE)
+            .display("&6&l返回经验交易")
+            .lore());
     public final Property<BustaIcon> btnStateEnabled = propertyIcon(this, "icons.state-enabled", def()
             .slot(13)
             .material(Material.GREEN_STAINED_GLASS_PANE)
@@ -117,33 +127,10 @@ public class GuiBetSettings extends CustomConfig implements Listener, Property.I
     }
 
     public void showBetSettingUI(Player p) {
-        Inventory inv = new BetGuiHolder(27, CO_Title.get()).getInventory();
+        Inventory inv = new BetGuiHolder(inventorySize.val(), color(title.val())).getInventory();
 
-        ArrayList<String> btnGameLore = new ArrayList<>();
-        btnGameLore.add(UI_Click.get());
-        ItemStack btnMoneyGame = new ItemStack(getGlass(11));
-        {
-            ItemMeta meta = btnMoneyGame.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName(CO_PlayMoneyGame.get());
-                meta.setLore(btnGameLore);
-                btnMoneyGame.setItemMeta(meta);
-            }
-            flag(btnMoneyGame, "back:money");
-            inv.setItem(18, btnMoneyGame);
-        }
-
-        ItemStack btnExpGame = new ItemStack(getGlass(11));
-        {
-            ItemMeta meta = btnExpGame.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName(CO_PlayExpGame.get());
-                meta.setLore(btnGameLore);
-                btnExpGame.setItemMeta(meta);
-            }
-            flag(btnMoneyGame, "back:exp");
-            inv.setItem(26, btnExpGame);
-        }
+        btnBackMoneyGame.val().set(inv, null, "back:money");
+        btnBackExpGame.val().set(inv, null, "back:exp");
 
         ListPair<String, Object> replacements = new ListPair<>();
         List<String> btnLore;

@@ -19,31 +19,7 @@ public enum Messages {
     Message_PlayerNotExist("§f玩家不存在."),
     Message_LastUpdate("最后更新: {sec} 秒前"),
 
-    UI_Title("§2[ Busta Mine ]"),
-    UI_BetBtn("§6§l买入"),
-    UI_CashOut("§6§l抛售"),
-    UI_History("§6§l历史倍数"),
-    UI_Bankroll("§6§l资金"),
     UI_PlayerInfo("§f赌注: {amount}"),
-    UI_MyState("§6§l我的交易状态"),
-    UI_Click("§e点击"),
-    UI_WinChance("§6§l获胜几率"),
-    UI_Close("§6§l关闭"),
-    UI_CashOutSetting("§6§l自动抛售"),
-
-    CO_Title("§2[ 自动抛售 ]"),
-    CO_Minus10("§6§l-10"),
-    CO_Minus1("§6§l-1"),
-    CO_Minus01("§6§l-0.1"),
-    CO_Plus10("§6§l+10"),
-    CO_Plus1("§6§l+1"),
-    CO_Plus01("§6§l+0.1"),
-    CO_x("§fx"),
-    CO_Enabled("§f开启"),
-    CO_Disabled("§f关闭"),
-    CO_OnOff("§6§l开/关"),
-    CO_PlayMoneyGame("§6§l返回金钱交易"),
-    CO_PlayExpGame("§6§l返回经验交易"),
 
     Help_BmGo("/bm go   §e开始游戏 (自动循环开盘)"),
     Help_BmStop("/bm stop   §e停止一盘游戏."),
@@ -55,9 +31,6 @@ public enum Messages {
 
     MyBal("我的资金"),
     Bal("资金"),
-    Money("金币"),
-    Exp("经验"),
-    MaximumMultiplier("最大倍数"),
     Bet("下注"),
     CashedOut("出售"),
     Busted("归零"),
@@ -68,6 +41,7 @@ public enum Messages {
     GamesPlayed("游戏次数"),
     Leaderboard("排行榜"),
     BettingLimit("§f超过了下注限制"),
+    PlayerCountLimit("§f已到达游戏人数上限"),
 
     ;
     private static String prefix = "";
