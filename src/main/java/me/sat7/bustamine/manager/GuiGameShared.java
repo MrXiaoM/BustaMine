@@ -78,6 +78,22 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                     "&e立即归零: %instant_bust%%",
                     "&e最大倍数: x%max_multi%"
             ));
+    public final Property<BustaIcon> btnPlayerHeadMoney = propertyIcon(this, "icons.player-head-money", def()
+            .material(Material.BLUE_STAINED_GLASS_PANE)
+            .display("&6%player%")
+            .lore("&f赌注:&e %amount%金币"));
+    public final Property<BustaIcon> btnPlayerHeadExp = propertyIcon(this, "icons.player-head-exp", def()
+            .material(Material.BLUE_STAINED_GLASS_PANE)
+            .display("&6%player%")
+            .lore("&f赌注:&e %amount%经验"));
+    public final Property<List<String>> btnPlayerHeadMoneyInGame = property(this, "icons.player-head-money.lore-in-game", Lists.newArrayList(
+            "&f赌注:&e %amount%金币",
+            "&f出售: x%cur_num%"
+    ));
+    public final Property<List<String>> btnPlayerHeadExpInGame = property(this, "icons.player-head-money.lore-in-game", Lists.newArrayList(
+            "&f赌注:&e %amount%经验",
+            "&f出售: x%cur_num%"
+    ));
     public final Property<BustaIcon> btnMyState = propertyIcon(this, "icons.my-state", def()
             .slot(47)
             .material(Material.PAPER)
@@ -489,19 +505,21 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         if (bustaState != BustaState.BET) return;
 
         // 如果下注的游戏不是玩家当前所在游戏，不进行任何操作
-        if (!type.equals(playerMap.getOrDefault(p.getUniqueId(), null))) {
+        UUID playerId = p.getUniqueId();
+        if (!type.equals(playerMap.getOrDefault(playerId, null))) {
             return;
         }
 
-        if (playerMap.size() >= getMaxPlayers()) {
+        // 超出游戏最大人数时提醒玩家
+        if (!playerMap.containsKey(playerId) && playerMap.size() >= getMaxPlayers()) {
             PlayerCountLimit.t(p);
             return;
         }
 
         // 是否第一次下注
-        boolean firstBet = !activePlayerMap.containsKey(p.getUniqueId());
+        boolean firstBet = !activePlayerMap.containsKey(playerId);
         // 之前已下注数量
-        int old = firstBet ? 0 : activePlayerMap.get(p.getUniqueId());
+        int old = firstBet ? 0 : activePlayerMap.get(playerId);
 
         if (type == BustaType.MONEY) {
             // 最大数量限制
@@ -521,7 +539,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
 
                 plugin.sounds().play(p, "Bet");
                 parent.runCommandBet(p, amount);
-                activePlayerMap.put(p.getUniqueId(), old + amount);
+                activePlayerMap.put(playerId, old + amount);
                 Message_DivUpper.t(p);
                 p.sendMessage("   §f" + Bet.get() + config.currencySymbol + (old + amount));
                 p.sendMessage("   §e" + MyBal.get() + ": " + config.currencySymbol + doubleFormat.format(economy.getBalance(p)));
@@ -530,7 +548,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                 // 如果是第一次下注，向其它玩家广播 有人加入游戏的通知
                 if (firstBet) {
                     for (UUID uuid : playerMap.keySet()) {
-                        if (p.getUniqueId().equals(uuid)) continue;
+                        if (playerId.equals(uuid)) continue;
                         try {
                             Player player = Bukkit.getPlayer(uuid);
                             if (player != null) {
@@ -555,7 +573,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                 p.giveExp(-amount);
 
                 parent.runCommandBet(p, amount);
-                activePlayerMap.put(p.getUniqueId(), old + amount);
+                activePlayerMap.put(playerId, old + amount);
                 Message_DivUpper.t(p);
                 p.sendMessage("   §f" + Bet.get() + " Xp" + (old + amount));
                 p.sendMessage("   §e" + MyBal.get() + ": Xp" + calcTotalExp(p));
@@ -564,7 +582,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                 // 如果是第一次下注，向其它玩家广播 有人加入游戏的通知
                 if (firstBet) {
                     for (UUID uuid : playerMap.keySet()) {
-                        if (p.getUniqueId().equals(uuid)) continue;
+                        if (playerId.equals(uuid)) continue;
                         try {
                             Player player = Bukkit.getPlayer(uuid);
                             if (player != null) {
@@ -584,10 +602,14 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         parent.updateBankroll(type, amount);
         parent.updateNetProfit(p, type, -amount);
 
+        int bet = old + amount;
+        ListPair<String, Object> replacements = new ListPair<>();
+        replacements.add("%player%", p.getName());
+        replacements.add("%amount%", bet);
         if (firstBet) {
             // 如果是第一次下注
             // 设置游戏类型，更新游玩次数，向界面添加头颅图标
-            playerMap.put(p.getUniqueId(), type);
+            playerMap.put(playerId, type);
 
             User user = plugin.users().get(p);
             user.setGamesPlayed(user.getGamesPlayed() + 1);
@@ -595,50 +617,40 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             int idx = getNextPlayerSlot();
             if (idx >= 0) {
                 ItemStack skull = Util.getPlayerHeadItem();
-                ItemMeta meta = skull.getItemMeta();
-
-                if (meta != null) {
-                    meta.setDisplayName("§6" + p.getName());
-                    ArrayList<String> lore = new ArrayList<>();
-                    if (type == BustaType.MONEY) {
-                        lore.add(UI_PlayerInfo.get().replace("{amount}", config.currencySymbol.val() + amount));
-                    } else {
-                        lore.add(UI_PlayerInfo.get().replace("{amount}", "Xp" + amount));
-                    }
-                    meta.setLore(lore);
-                    skull.setItemMeta(meta);
+                String flag = "show player info:" + p.getName();
+                if (type == BustaType.MONEY) {
+                    btnPlayerHeadMoney.val().generateItem(skull, replacements, null, flag);
+                } else {
+                    btnPlayerHeadExp.val().generateItem(skull, replacements, null, flag);
                 }
-                flag(skull, "show player info:" + p.getName());
 
                 if (config.isLoadPlayerSkin.val()) {
                     // 更新头颅物品皮肤
                     plugin.getScheduler().runAsync(t -> {
                         ItemMeta itemMeta = skull.getItemMeta();
-                        if (itemMeta instanceof SkullMeta) {
-                            try {
-                                SkullMeta skullMeta = (SkullMeta) itemMeta;
-                                skullMeta.setOwningPlayer(p);
-                                skull.setItemMeta(skullMeta);
-                            } catch (Exception e) {
-                                log("Failed to load skull skin of player: " + p.getName());
-                            }
+                        if (itemMeta instanceof SkullMeta) try {
+                            SkullMeta skullMeta = (SkullMeta) itemMeta;
+                            skullMeta.setOwningPlayer(p);
+                            skull.setItemMeta(skullMeta);
+                        } catch (Exception e) {
+                            log("Failed to load skull skin of player: " + p.getName());
                         }
                     });
                 }
 
                 setBothIcon(idx, skull);
 
-                headPos.put(p.getUniqueId(), idx);
+                headPos.put(playerId, idx);
             }
         } else try {
             // 不是第一次下注，则更新头颅图标的 lore
-            if (headPos.containsKey(p.getUniqueId())) {
-                int idx = headPos.get(p.getUniqueId());
-                List<String> lore = new ArrayList<>();
+            Integer idx = headPos.get(playerId);
+            if (idx != null) {
+                List<String> lore;
                 if (type == BustaType.MONEY) {
-                    lore.add(UI_PlayerInfo.get().replace("{amount}", config.currencySymbol.val() + (old + amount)));
+                    lore = Pair.replace(btnPlayerHeadMoney.val().getLore(), replacements);
                 } else {
-                    lore.add(UI_PlayerInfo.get().replace("{amount}", "Xp" + (old + amount)));
+                    lore = Pair.replace(btnPlayerHeadExp.val().getLore(), replacements);
                 }
                 updateBothIcon(idx, lore);
             }
@@ -658,16 +670,23 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         // 要求已下注，获取并清空玩家的下注金额
         Integer bet = activePlayerMap.remove(p.getUniqueId());
         if (bet == null) return;
+        BustaType type = playerMap.get(p.getUniqueId());
 
         double prize = bet * (parent.curNum() / 100.0);
+        String curNumFormatted = parent.curNumFormatted();
 
         parent.runCommandCashOut(p, bet, parent.curNum(), prize);
         plugin.sounds().play(p, "CashOut");
 
+        ListPair<String, Object> replacements = new ListPair<>();
+        replacements.add("%player%", p.getName());
+        replacements.add("%amount%", bet);
+        replacements.add("%cur_num%", curNumFormatted);
+
         // 进行抛售操作，给予玩家奖励的金币或经验
         Message_DivUpper.t(p);
-        p.sendMessage("   §f" + CashedOut.get() + ": x" + parent.curNumFormatted());
-        if (playerMap.get(p.getUniqueId()) == BustaType.MONEY) {
+        p.sendMessage("   §f" + CashedOut.get() + ": x" + curNumFormatted);
+        if (type == BustaType.MONEY) {
             plugin.getEconomy().depositPlayer(p, prize);
             p.sendMessage("   §3" + Profit.get() + ": " + config.currencySymbol + doubleFormat.format(prize - bet));
             p.sendMessage("   §e" + MyBal.get() + ": " + config.currencySymbol + doubleFormat.format(plugin.getEconomy().getBalance(p)));
@@ -678,27 +697,32 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         }
         Message_DivLower.t(p);
 
-        if (headPos.containsKey(p.getUniqueId())) {
+        Integer headPos = this.headPos.get(p.getUniqueId());
+        if (headPos != null) {
             // 更新玩家头颅 lore
-            ItemStack out = new ItemStack(getGlass(11));
-            ItemStack head = getMoneyIcon(headPos.get(p.getUniqueId()));
-            ItemMeta headMeta = head.getItemMeta();
-            List<String> oldLore = headMeta != null ? headMeta.getLore() : null;
-
-            List<String> lore = new ArrayList<>();
-            if (oldLore != null) lore.addAll(oldLore);
-            lore.add("§f" + CashedOut.get() + ": x" + parent.curNumFormatted());
+            ItemStack out;
+            String displayName;
+            List<String> lore;
+            if (type == BustaType.MONEY) {
+                out = btnPlayerHeadMoney.val().newItem();
+                displayName = Pair.replace(btnPlayerHeadMoney.val().getDisplay(), replacements);
+                lore = Pair.replace(btnPlayerHeadMoneyInGame.val(), replacements);
+            } else {
+                out = btnPlayerHeadExp.val().newItem();
+                displayName = Pair.replace(btnPlayerHeadExp.val().getDisplay(), replacements);
+                lore = Pair.replace(btnPlayerHeadExpInGame.val(), replacements);
+            }
 
             ItemMeta meta = out.getItemMeta();
             if (meta != null) {
-                meta.setDisplayName(head.getItemMeta().getDisplayName());
-                meta.setLore(lore);
+                meta.setDisplayName(color(displayName));
+                meta.setLore(color(lore));
                 out.setItemMeta(meta);
             }
 
             flag(out, "show player info:" + p.getName());
-            setBothIcon(headPos.get(p.getUniqueId()), out);
-            headPos.remove(p.getUniqueId());
+            setBothIcon(headPos, out);
+            this.headPos.remove(p.getUniqueId());
         }
 
         // 向游戏中所有玩家广播 抛售通知
@@ -707,14 +731,14 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             try {
                 Player player = Bukkit.getPlayer(uuid);
                 if (player != null) {
-                    player.sendMessage("§6♣ " + p.getName() + " " + CashedOut.get() + " x" + parent.curNumFormatted());
+                    player.sendMessage("§6♣ " + p.getName() + " " + CashedOut.get() + " x" + curNumFormatted);
                 }
             } catch (Exception ignored) {
             }
         }
 
-        parent.updateBankroll(playerMap.get(p.getUniqueId()), -prize);
-        parent.updateNetProfit(p, playerMap.get(p.getUniqueId()), prize);
+        parent.updateBankroll(type, -prize);
+        parent.updateNetProfit(p, type, prize);
     }
 
     public void updateBothIcon(int index, List<String> lore) {

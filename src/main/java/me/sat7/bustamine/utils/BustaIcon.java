@@ -33,6 +33,22 @@ public class BustaIcon {
         return slot;
     }
 
+    public Item getMaterial() {
+        return material;
+    }
+
+    public ItemStack newItem() {
+        return material.newItem(amount);
+    }
+
+    public String getDisplay() {
+        return display;
+    }
+
+    public List<String> getLore() {
+        return lore;
+    }
+
     public void set(Inventory inv, List<Pair<String, Object>> replacements, String flag) {
         ItemStack item = generateItem(replacements, flag);
         inv.setItem(slot, item);
@@ -47,9 +63,13 @@ public class BustaIcon {
         return generateItem(replacements, null, flag);
     }
 
-    @SuppressWarnings({"deprecation"})
     public ItemStack generateItem(List<Pair<String, Object>> replacements, @Nullable List<String> newLore, String flag) {
         ItemStack item = material.newItem(amount);
+        return generateItem(item, replacements, newLore, flag);
+    }
+
+    @SuppressWarnings({"deprecation"})
+    public ItemStack generateItem(ItemStack item, List<Pair<String, Object>> replacements, @Nullable List<String> newLore, String flag) {
         if (item.getType().equals(Material.AIR)) return item;
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
