@@ -521,7 +521,8 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
 
         // 如果下注的游戏不是玩家当前所在游戏，不进行任何操作
         UUID playerId = p.getUniqueId();
-        if (!type.equals(playerMap.getOrDefault(playerId, null))) {
+        BustaType lastType = playerMap.get(playerId);
+        if (lastType != null && !type.equals(lastType)) {
             return;
         }
 
