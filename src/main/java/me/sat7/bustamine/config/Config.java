@@ -13,7 +13,7 @@ import static me.sat7.bustamine.utils.Property.property;
 public class Config extends CustomConfig implements Property.IPropertyRegistry {
     private final List<Property<?>> registeredProperties = new ArrayList<>();
     public final Property<String> currencySymbol = property(this, "CurrencySymbol", "$");
-    public final Property<Integer> roundInterval = property(this, "RoundInterval", 5);
+    public final Property<Integer> roundInterval = property(this, "RoundInterval", 30);
     public final Property<Integer> multiplierMax = property(this, "MultiplierMax", 120);
     public final Property<Double> probabilityOfInstaBust = property(this, "ProbabilityOfInstaBust", 2.0);
 
