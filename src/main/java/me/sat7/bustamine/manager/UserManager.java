@@ -69,7 +69,7 @@ public class UserManager implements Listener {
             UUID uuid = UUID.fromString(key);
             OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
             User user = new User(player);
-            user.setCashOut(entry.getInt("CashOut", -1));
+            user.setAutoCashOut(entry.getInt("CashOut", -1));
             user.setGamesPlayed(entry.getInt("GamesPlayed"));
             user.setNetProfit(entry.getDouble("NetProfit"));
             user.setNetProfitExp(entry.getInt("NetProfit_Exp"));
@@ -89,7 +89,7 @@ public class UserManager implements Listener {
         YamlConfiguration config = new YamlConfiguration();
         for (User user : users.values()) {
             String prefix = "users." + user.getPlayer().getUniqueId() + ".";
-            config.set(prefix + "CashOut", user.getCashOut());
+            config.set(prefix + "CashOut", user.getAutoCashOut());
             config.set(prefix + "GamesPlayed", user.getGamesPlayed());
             config.set(prefix + "NetProfit", user.getNetProfit());
             config.set(prefix + "NetProfit_Exp", user.getNetProfitExp());

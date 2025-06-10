@@ -70,8 +70,8 @@ public class GuiBetSettings implements Listener {
         ItemStack state;
         ArrayList<String> btnLore = new ArrayList<>();
         User user = plugin.users().get(p);
-        if (user.getCashOut() >= 0) {
-            btnLore.add(CO_Enabled.get() + ": " + CO_x.get() + (user.getCashOut() / 100.0));
+        if (user.getAutoCashOut() >= 0) {
+            btnLore.add(CO_Enabled.get() + ": " + CO_x.get() + (user.getAutoCashOut() / 100.0));
             btnLore.add(UI_Click.get());
 
             state = new ItemStack(getGlass(13));
@@ -155,10 +155,10 @@ public class GuiBetSettings implements Listener {
             }
             if (flag.equals("state")) { // 13
                 User user = plugin.users().get(player);
-                if (user.getCashOut() >= 0) {
-                    user.setCashOut(-1);
+                if (user.getAutoCashOut() >= 0) {
+                    user.setAutoCashOut(-1);
                 } else {
-                    user.setCashOut(200);
+                    user.setAutoCashOut(200);
                 }
                 showBetSettingUI(player);
                 return;
@@ -168,7 +168,7 @@ public class GuiBetSettings implements Listener {
                 if (mod != null) {
                     User user = plugin.users().get(player);
 
-                    int target = user.getCashOut() + mod;
+                    int target = user.getAutoCashOut() + mod;
                     if (target < 110) {
                         target = 110;
                     }
@@ -176,7 +176,7 @@ public class GuiBetSettings implements Listener {
                         target = multiplierMax * 100;
                     }
 
-                    user.setCashOut(target);
+                    user.setAutoCashOut(target);
                     showBetSettingUI(player);
                 }
                 return;

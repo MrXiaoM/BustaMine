@@ -4,11 +4,29 @@ import org.bukkit.OfflinePlayer;
 
 public class User {
     private final OfflinePlayer player;
-    int cashOut = -1;
+    /**
+     * 自动抛售倍率阈值 (<code>100 == x1.00</code>)，<code>-1</code> 禁用自动抛售
+     */
+    int autoCashOut = -1;
+    /**
+     * 进行游戏的次数
+     */
     int gamesPlayed;
+    /**
+     * 净利润金币
+     */
     double netProfit;
+    /**
+     * 净利润经验
+     */
     int netProfitExp;
+    /**
+     * 上次加入游戏时间
+     */
     long lastJoin;
+    /**
+     * 最后一次登录的游戏名
+     */
     String lastName;
 
     public User(OfflinePlayer player) {
@@ -19,12 +37,12 @@ public class User {
         return player;
     }
 
-    public int getCashOut() {
-        return cashOut;
+    public int getAutoCashOut() {
+        return autoCashOut;
     }
 
-    public void setCashOut(int cashOut) {
-        this.cashOut = cashOut;
+    public void setAutoCashOut(int autoCashOut) {
+        this.autoCashOut = autoCashOut;
     }
 
     public int getGamesPlayed() {

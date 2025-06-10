@@ -6,10 +6,14 @@ import me.sat7.bustamine.config.Config;
 import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaState;
 import me.sat7.bustamine.manager.enums.BustaType;
+import me.sat7.bustamine.manager.gui.IBustaMineGui;
 import me.sat7.bustamine.utils.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -128,8 +132,8 @@ public class GameManager {
             try {
                 OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
                 User user = plugin.users().get(player);
-                if (user.getCashOut() >= 0) { // 如果玩家抛售数量大于0，且当前数量大于抛售数量，则执行抛售
-                    if (newNum >= user.getCashOut()) {
+                if (user.getAutoCashOut() >= 0) { // 如果玩家自动抛售倍率大于0，且当前倍率大于等于自动抛售倍率，则执行抛售
+                    if (newNum >= user.getAutoCashOut()) {
                         Player p = player.isOnline() ? player.getPlayer() : null;
                         if (p != null) {
                             guiGameShared().cashOut(p);
