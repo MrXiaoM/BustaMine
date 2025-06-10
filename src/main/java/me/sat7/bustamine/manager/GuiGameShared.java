@@ -318,7 +318,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                 "bet:big");
 
         // 更新抛售图标的 lore 为买入提示
-        updateBothIcon(btnCashOut.val().getSlot(), btnCashOutLoreBet.val());
+        updateBothIcon(btnCashOut.val().getSlot(), color(btnCashOutLoreBet.val()));
     }
 
     public void openGameGUI(Player p, BustaType type) {
@@ -481,7 +481,8 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
     public void updateCurNumToCashIcon() {
         ListPair<String, Object> replacements = new ListPair<>();
         replacements.add("%cur_num%", parent.curNumFormatted());
-        updateBothIcon(btnCashOut.val().getSlot(), Pair.replace(btnCashOutLoreGame.val(), replacements));
+        List<String> lore = color(Pair.replace(btnCashOutLoreGame.val(), replacements));
+        updateBothIcon(btnCashOut.val().getSlot(), lore);
     }
 
     public void updateHistoryIcon() {
@@ -659,7 +660,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                 } else {
                     lore = Pair.replace(btnPlayerHeadExp.val().getLore(), replacements);
                 }
-                updateBothIcon(idx, lore);
+                updateBothIcon(idx, color(lore));
             }
         } catch (Exception e) {
             log("Failed to update UI. Game/Bet/!firstBet", e);
