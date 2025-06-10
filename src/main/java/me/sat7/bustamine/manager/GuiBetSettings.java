@@ -50,7 +50,7 @@ public class GuiBetSettings extends CustomConfig implements Listener, Property.I
                     "&f开启: x%auto_cash_out%",
                     "&e点击进行操作"
             ));
-    public final Property<BustaIcon> btnStateDisabled = propertyIcon(this, "icons.state-enabled", def()
+    public final Property<BustaIcon> btnStateDisabled = propertyIcon(this, "icons.state-disabled", def()
             .slot(13)
             .material(Material.RED_STAINED_GLASS_PANE)
             .display("&6&l开/关")
