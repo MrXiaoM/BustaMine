@@ -123,36 +123,41 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             .material(Material.PAPER)
             .display("&6&l自动抛售")
             .lore());
-    public final Property<BustaIcon> btnBetMoneySmall = propertyIcon(this, "icons.bet-money-small", def()
+    public final Property<BustaIcon> btnBetMoneySmall = propertyIcon(this, "icons.bet.money-small", def()
             .slot(51)
             .material(Material.GOLD_NUGGET)
             .display("&6&l买入 &e%money%金币")
             .lore());
-    public final Property<BustaIcon> btnBetMoneyMedium = propertyIcon(this, "icons.bet-money-medium", def()
+    public final Property<BustaIcon> btnBetMoneyMedium = propertyIcon(this, "icons.bet.money-medium", def()
             .slot(52)
             .material(Material.GOLD_INGOT)
             .display("&6&l买入 &e%money%金币")
             .lore());
-    public final Property<BustaIcon> btnBetMoneyBig = propertyIcon(this, "icons.bet-money-big", def()
+    public final Property<BustaIcon> btnBetMoneyBig = propertyIcon(this, "icons.bet.money-big", def()
             .slot(53)
             .material(Material.GOLD_BLOCK)
             .display("&6&l买入 &e%money%金币")
             .lore());
-    public final Property<BustaIcon> btnBetExpSmall = propertyIcon(this, "icons.bet-exp-small", def()
+    public final Property<BustaIcon> btnBetExpSmall = propertyIcon(this, "icons.bet.exp-small", def()
             .slot(51)
             .material(Material.GOLD_NUGGET)
             .display("&6&l买入 &e%money%经验")
             .lore());
-    public final Property<BustaIcon> btnBetExpMedium = propertyIcon(this, "icons.bet-exp-medium", def()
+    public final Property<BustaIcon> btnBetExpMedium = propertyIcon(this, "icons.bet.exp-medium", def()
             .slot(52)
             .material(Material.GOLD_INGOT)
             .display("&6&l买入 &e%money%经验")
             .lore());
-    public final Property<BustaIcon> btnBetExpBig = propertyIcon(this, "icons.bet-exp-big", def()
+    public final Property<BustaIcon> btnBetExpBig = propertyIcon(this, "icons.bet.exp-big", def()
             .slot(53)
             .material(Material.GOLD_BLOCK)
             .display("&6&l买入 &e%money%经验")
             .lore());
+    public final Property<List<String>> btnBetLore = property(this, "icons.bet.lore", Lists.newArrayList(
+            "&b&l下一轮将在 %time% 秒后开始"
+    ));
+    public final List<Property<BustaIcon>> btnBetMoney = Lists.newArrayList(btnBetMoneySmall, btnBetMoneyMedium, btnBetMoneyBig);
+    public final List<Property<BustaIcon>> btnBetExp = Lists.newArrayList(btnBetExpSmall, btnBetExpMedium, btnBetExpBig);
 
     private Inventory gameInventory;
     private Inventory gameInventory_exp;
@@ -751,17 +756,24 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
     }
 
     public void updateBothIcon(int index, List<String> lore) {
-        ItemStack item1 = gameInventory.getItem(index);
-        ItemStack item2 = gameInventory_exp.getItem(index);
-        ItemMeta meta1 = item1 == null ? null : item1.getItemMeta();
-        ItemMeta meta2 = item2 == null ? null : item2.getItemMeta();
-        if (meta1 != null) {
-            meta1.setLore(lore);
-            item1.setItemMeta(meta1);
+        updateMoneyIcon(index, lore);
+        updateExpIcon(index, lore);
+    }
+
+    public void updateMoneyIcon(int index, List<String> lore) {
+        ItemStack item = gameInventory.getItem(index);
+        ItemMeta meta = item == null ? null : item.getItemMeta();
+        if (meta != null) {
+            meta.setLore(lore);
+            item.setItemMeta(meta);
         }
-        if (meta2 != null) {
-            meta2.setLore(lore);
-            item2.setItemMeta(meta2);
+    }
+    public void updateExpIcon(int index, List<String> lore) {
+        ItemStack item = gameInventory_exp.getItem(index);
+        ItemMeta meta = item == null ? null : item.getItemMeta();
+        if (meta != null) {
+            meta.setLore(lore);
+            item.setItemMeta(meta);
         }
     }
 

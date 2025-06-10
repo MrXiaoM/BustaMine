@@ -1,5 +1,6 @@
 package me.sat7.bustamine.manager;
 
+import com.google.common.collect.Lists;
 import com.tcoded.folialib.wrapper.task.WrappedTask;
 import me.sat7.bustamine.BustaMine;
 import me.sat7.bustamine.config.Config;
@@ -7,9 +8,7 @@ import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaState;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.IBustaMineGui;
-import me.sat7.bustamine.utils.BustaIcon;
-import me.sat7.bustamine.utils.ListPair;
-import me.sat7.bustamine.utils.Util;
+import me.sat7.bustamine.utils.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -226,13 +225,19 @@ public class GameManager implements Listener {
                 }
             } else {
                 // 显示距离下一轮游戏开始的剩余时间，更新到 lore
-                List<String> nextRoundLore = new ArrayList<>();
-                nextRoundLore.add("§b§l" + "Next round in " + betTimeLeft + "s");
+                // TODO
+                ListPair<String, Object> replacements = new ListPair<>();
+                replacements.add("%time%", betTimeLeft);
+                GuiGameShared gui = guiGameShared();
+                List<String> lore = Pair.replace(gui.btnBetLore.val(), replacements);
 
-                if (betTimeLeft <= 5) guiGameShared().drawNumber(betTimeLeft);
+                if (betTimeLeft <= 5) gui.drawNumber(betTimeLeft);
 
-                for (int i = 51; i <= 53; i++) {
-                    guiGameShared().updateBothIcon(i, nextRoundLore);
+                for (Property<BustaIcon> property : gui.btnBetMoney) {
+                    gui.updateMoneyIcon(property.val().getSlot(), lore);
+                }
+                for (Property<BustaIcon> property : gui.btnBetExp) {
+                    gui.updateExpIcon(property.val().getSlot(), lore);
                 }
             }
         }, 1L, 20L);
