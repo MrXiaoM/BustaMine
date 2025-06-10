@@ -1,6 +1,5 @@
 package me.sat7.bustamine.manager;
 
-import com.google.common.collect.Lists;
 import com.tcoded.folialib.wrapper.task.WrappedTask;
 import me.sat7.bustamine.BustaMine;
 import me.sat7.bustamine.config.Config;
@@ -225,7 +224,6 @@ public class GameManager implements Listener {
                 }
             } else {
                 // 显示距离下一轮游戏开始的剩余时间，更新到 lore
-                // TODO
                 ListPair<String, Object> replacements = new ListPair<>();
                 replacements.add("%time%", betTimeLeft);
                 GuiGameShared gui = guiGameShared();

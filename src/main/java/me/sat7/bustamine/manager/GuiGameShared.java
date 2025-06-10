@@ -107,6 +107,10 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
             .material(Material.PAPER)
             .display("&6&l历史倍数")
             .lore());
+    public final Property<Integer> btnHistoryMaxCount = property(this, "icons.history.max-count", 16);
+    public final Property<Integer> btnHistoryProfitLoreLine = property(this, "icons.history.profit-lore.line", 200);
+    public final Property<String> btnHistoryProfitLoreYes = property(this, "icons.history.profit-lore.yes", "&ax%num%");
+    public final Property<String> btnHistoryProfitLoreNo = property(this, "icons.history.profit-lore.no", "&cx%num%");
     public final Property<BustaIcon> btnCashOut = propertyIcon(this, "icons.cash-out", def()
             .slot(49)
             .material(Material.EMERALD)
@@ -475,7 +479,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         }
 
         history.add(parent.curNum());
-        if (history.size() > 16) history.remove(0);
+        if (history.size() > btnHistoryMaxCount.val()) history.remove(0);
 
         updateHistoryIcon();
 
@@ -486,21 +490,23 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
     public void updateCurNumToCashIcon() {
         ListPair<String, Object> replacements = new ListPair<>();
         replacements.add("%cur_num%", parent.curNumFormatted());
-        List<String> lore = color(Pair.replace(btnCashOutLoreGame.val(), replacements));
-        updateBothIcon(btnCashOut.val().getSlot(), lore);
+        List<String> lore = new ArrayList<>(btnCashOut.val().getLore());
+        lore.addAll(Pair.replace(btnCashOutLoreGame.val(), replacements));
+        updateBothIcon(btnCashOut.val().getSlot(), color(lore));
     }
 
     public void updateHistoryIcon() {
-        List<String> historyLore = new ArrayList<>();
-        // TODO: 转移到配置文件
+        List<String> historyLore = new ArrayList<>(btnHistory.val().getLore());
         for (int i : history) {
-            if (i >= 200) {
-                historyLore.add("§ax" + doubleFormat.format(i / 100.0));
+            ListPair<String, Object> replacements = new ListPair<>();
+            replacements.add("%num%", doubleFormat.format(i / 100.0));
+            if (i >= btnHistoryProfitLoreLine.val()) {
+                historyLore.add(Pair.replace(btnHistoryProfitLoreYes.val(), replacements));
             } else {
-                historyLore.add("§cx" + doubleFormat.format(i / 100.0));
+                historyLore.add(Pair.replace(btnHistoryProfitLoreNo.val(), replacements));
             }
         }
-        updateBothIcon(btnHistory.val().getSlot(), historyLore);
+        updateBothIcon(btnHistory.val().getSlot(), color(historyLore));
     }
 
     /**
