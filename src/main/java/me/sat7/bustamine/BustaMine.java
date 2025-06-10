@@ -147,6 +147,7 @@ public final class BustaMine extends JavaPlugin {
         new CommandMain(this);
 
         config.setup();
+        gameManager.setup();
         setupBank();
         reloadMessages();
         reloadConfig();

@@ -1,14 +1,13 @@
 package me.sat7.bustamine.manager;
 
-import me.sat7.bustamine.BustaMine;
+import com.google.common.collect.Lists;
 import me.sat7.bustamine.config.Config;
 import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaState;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.BustaGuiHolder;
 import me.sat7.bustamine.manager.gui.IBustaMineGui;
-import me.sat7.bustamine.utils.Item;
-import me.sat7.bustamine.utils.Util;
+import me.sat7.bustamine.utils.*;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
@@ -29,6 +28,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static me.sat7.bustamine.BustaMine.log;
 import static me.sat7.bustamine.config.Messages.*;
+import static me.sat7.bustamine.utils.BustaIcon.def;
+import static me.sat7.bustamine.utils.BustaIcon.propertyIcon;
+import static me.sat7.bustamine.utils.Property.property;
 import static me.sat7.bustamine.utils.Util.*;
 
 /**
@@ -39,10 +41,75 @@ import static me.sat7.bustamine.utils.Util.*;
  *     <li><code>/bm money</code> 打开金币股市</li>
  * </ul>
  */
-public class GuiGameShared implements Listener {
-    private final BustaMine plugin;
+public class GuiGameShared extends CustomConfig implements Listener, Property.IPropertyRegistry {
+    private final List<Property<?>> registeredProperties = new ArrayList<>();
     private final GameManager parent;
     private final Config config;
+
+    public final Property<BustaIcon> btnBankroll = propertyIcon(this, "icons.bankroll", def()
+            .material(Material.DIAMOND)
+            .display("&6&l资金")
+            .lore(
+                    "&e%bank_money%K",
+                    "&eXp%bank_exp%K"
+            ));
+    public final Property<BustaIcon> btnWinChance = propertyIcon(this, "icons.win-chance", def()
+            .material(Material.PAPER)
+            .display("&6&l获胜几率")
+            .lore(
+                    "&ex2: %x2%%",
+                    "&ex3: %x3%%",
+                    "&ex7: %x7%%",
+                    "&ex12: %x12%%",
+                    "&e立即归零: %instant_bust%%",
+                    "&e最大倍数: x%max_multi%"
+            ));
+    public final Property<BustaIcon> btnMyState = propertyIcon(this, "icons.my-state", def()
+            .material(Material.PAPER)
+            .display("&6&l我的交易状态")
+            .lore());
+    public final Property<BustaIcon> btnHistory = propertyIcon(this, "icons.history", def()
+            .material(Material.PAPER)
+            .display("&6&l历史倍数")
+            .lore());
+    public final Property<BustaIcon> btnCashOut = propertyIcon(this, "icons.cash-out", def()
+            .material(Material.EMERALD)
+            .display("&6&l抛售")
+            .lore());
+    public final Property<List<String>> btnCashOutLoreBet = property(this, "icons.cash-out.lore-bet", Lists.newArrayList(
+            "&e&l>> 在右边的图标买入"
+    ));
+    public final Property<List<String>> btnCashOutLoreGame = property(this, "icons.cash-out.lore-game", Lists.newArrayList(
+            "&c&lx%cur_num%"
+    ));
+    public final Property<BustaIcon> btnCashOutSetting = propertyIcon(this, "icons.cash-out-setting", def()
+            .material(Material.PAPER)
+            .display("&6&l自动抛售")
+            .lore());
+    public final Property<BustaIcon> btnBetMoneySmall = propertyIcon(this, "icons.bet-money-small", def()
+            .material(Material.GOLD_NUGGET)
+            .display("&6&l买入 &e%money%金币")
+            .lore());
+    public final Property<BustaIcon> btnBetMoneyMedium = propertyIcon(this, "icons.bet-money-medium", def()
+            .material(Material.GOLD_INGOT)
+            .display("&6&l买入 &e%money%金币")
+            .lore());
+    public final Property<BustaIcon> btnBetMoneyBig = propertyIcon(this, "icons.bet-money-big", def()
+            .material(Material.GOLD_BLOCK)
+            .display("&6&l买入 &e%money%金币")
+            .lore());
+    public final Property<BustaIcon> btnBetExpSmall = propertyIcon(this, "icons.bet-exp-small", def()
+            .material(Material.GOLD_NUGGET)
+            .display("&6&l买入 &e%money%经验")
+            .lore());
+    public final Property<BustaIcon> btnBetExpMedium = propertyIcon(this, "icons.bet-exp-medium", def()
+            .material(Material.GOLD_INGOT)
+            .display("&6&l买入 &e%money%经验")
+            .lore());
+    public final Property<BustaIcon> btnBetExpBig = propertyIcon(this, "icons.bet-exp-big", def()
+            .material(Material.GOLD_BLOCK)
+            .display("&6&l买入 &e%money%经验")
+            .lore());
 
     private Inventory gameInventory;
     private Inventory gameInventory_exp;
@@ -68,12 +135,26 @@ public class GuiGameShared implements Listener {
     int betExpSmall, betExpMedium, betExpBig;
     int betMoneySmall, betMoneyMedium, betMoneyBig;
 
-
     public GuiGameShared(GameManager parent) {
+        super(parent.plugin());
         this.parent = parent;
-        this.plugin = parent.plugin();
         this.config = parent.plugin().config();
         Bukkit.getPluginManager().registerEvents(this, plugin);
+    }
+
+    @Override
+    public void registerProperty(Property<?> property) {
+        registeredProperties.add(property);
+    }
+
+    public void setup() {
+        setup("gui/shared", config -> {
+            for (Property<?> property : registeredProperties) {
+                property.setup();
+            }
+            config.options().copyDefaults(true);
+        });
+        save();
     }
 
     public void reset() {
@@ -99,13 +180,6 @@ public class GuiGameShared implements Listener {
         IBustaMineGui.closeAllGameUI();
         createGameGUI(BustaType.MONEY);
         createGameGUI(BustaType.EXP);
-    }
-
-    public void updateBothIcon(int index, ItemMeta meta) {
-        ItemStack item1 = gameInventory.getItem(index);
-        ItemStack item2 = gameInventory_exp.getItem(index);
-        if (item1 != null) item1.setItemMeta(meta);
-        if (item2 != null) item2.setItemMeta(meta);
     }
 
     public void updateBothIcon(int index, List<String> lore) {
@@ -171,40 +245,73 @@ public class GuiGameShared implements Listener {
         }
         Inventory inv = new BustaGuiHolder(type, 54, title).getInventory();
 
-        if (config.isShowBankroll.val()) {
-            ItemStack bankrollBtn = createItemStack(config.btnBankroll, null,
-                    UI_Bankroll.get(), null, 1);
-            flag(bankrollBtn, "bankroll");
-            inv.setItem(45, bankrollBtn);
-        }
-
-        ArrayList<String> myStateLore = new ArrayList<>();
-        myStateLore.add(UI_Click.get());
-        ItemStack myStateBtn = createItemStack(config.btnMyState, null,
-                UI_MyState.get(), myStateLore, 1);
-        flag(myStateBtn, "my state");
-        inv.setItem(47, myStateBtn);
-
-        ItemStack historyBtn = createItemStack(config.btnHistory, null,
-                UI_History.get(), null, 1);
-        flag(historyBtn, "history");
-        inv.setItem(48, historyBtn);
-
-        ItemStack cashOutBtn = createItemStack(config.btnCashOut, null,
-                UI_CashOut.get(), null, 1);
-        flag(cashOutBtn, "cash out");
-        inv.setItem(49, cashOutBtn);
-
-        ItemStack showBetSettingBtn = createItemStack(config.btnCashOutSetting, null,
-                UI_CashOutSetting.get(), null, 1);
-        flag(showBetSettingBtn, "show bet setting");
-        inv.setItem(50, showBetSettingBtn);
+        inv.setItem(47, btnMyState.val().generateItem(null, "my state"));
+        inv.setItem(48, btnHistory.val().generateItem(null, "history"));
+        inv.setItem(49, btnCashOut.val().generateItem(null, "cash out"));
+        inv.setItem(50, btnCashOutSetting.val().generateItem(null, "show bet setting"));
 
         if (type == BustaType.MONEY) {
             gameInventory = inv;
         } else {
             gameInventory_exp = inv;
         }
+    }
+
+    public void updateStartGameUI() {
+        // 显示胜率公示
+        if (config.isShowWinChance.val()) {
+            int maxMulti = parent.maxMulti;
+            double baseInstantBust = parent.baseInstantBust;
+            double bustChance = odd(maxMulti - 1);
+            ListPair<String, Object> replacements = new ListPair<>();
+            replacements.add("%x2%", doubleFormat.format((odd(1) - bustChance) * 100 * (1 - baseInstantBust)));
+            replacements.add("%x3%", doubleFormat.format((odd(2) - bustChance) * 100 * (1 - baseInstantBust)));
+            replacements.add("%x7%", doubleFormat.format((odd(6) - bustChance) * 100 * (1 - baseInstantBust)));
+            replacements.add("%x12%", doubleFormat.format((odd(11) - bustChance) * 100 * (1 - baseInstantBust)));
+            replacements.add("%instant_bust%", doubleFormat.format((bustChance + baseInstantBust) * 100));
+            replacements.add("%max_multi%", maxMulti);
+            ItemStack winChance = btnWinChance.val().generateItem(replacements, "win chance");
+
+            setBothIcon(46, winChance);
+        } else {
+            setBothIcon(46, null);
+        }
+
+        // 显示资金
+        if (config.isShowBankroll.val()) {
+            parent.updateBankroll(BustaType.MONEY, 0);
+            parent.updateBankroll(BustaType.EXP, 0);
+        } else {
+            setBothIcon(45, null);
+        }
+
+        // 添加下注按钮
+        // 10
+        setMoneyIcon(51, btnBetMoneySmall.val().generateItem(
+                Lists.newArrayList(Pair.of("%money%", config.betSmall)),
+                "bet:small"));
+        setExpIcon(51, btnBetExpSmall.val().generateItem(
+                Lists.newArrayList(Pair.of("%money%", config.betExpSmall)),
+                "bet:small"));
+
+        // 100
+        setMoneyIcon(52, btnBetMoneyMedium.val().generateItem(
+                Lists.newArrayList(Pair.of("%money%", config.betMedium)),
+                "bet:medium"));
+        setExpIcon(52, btnBetExpMedium.val().generateItem(
+                Lists.newArrayList(Pair.of("%money%", config.betExpMedium)),
+                "bet:medium"));
+
+        // 1000
+        setMoneyIcon(53, btnBetMoneyBig.val().generateItem(
+                Lists.newArrayList(Pair.of("%money%", config.betBig)),
+                "bet:big"));
+        setExpIcon(53, btnBetExpBig.val().generateItem(
+                Lists.newArrayList(Pair.of("%money%", config.betExpBig)),
+                "bet:big"));
+
+        // 更新抛售图标的 lore 为买入提示
+        updateBothIcon(49, btnCashOutLoreBet.val());
     }
 
     public void openGameGUI(Player p, BustaType type) {
@@ -359,10 +466,9 @@ public class GuiGameShared implements Listener {
             }
         }
 
-        ArrayList<String> newLore = new ArrayList<>();
-        newLore.add("§c§lx" + parent.curNumFormatted());
-
-        updateBothIcon(49, newLore);
+        ListPair<String, Object> replacements = new ListPair<>();
+        replacements.add("%cur_num%", parent.curNumFormatted());
+        updateBothIcon(49, Pair.replace(btnCashOutLoreGame.val(), replacements));
 
         for (int i = 0; i < 45; i++) {
             if (!headPos.containsValue(i)) {

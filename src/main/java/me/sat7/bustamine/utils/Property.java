@@ -1,5 +1,6 @@
 package me.sat7.bustamine.utils;
 
+import java.util.List;
 import java.util.function.Function;
 
 public class Property<V> {
@@ -64,6 +65,9 @@ public class Property<V> {
     public static Property<String> property(CustomConfig config, String key, String def) {
         return new Property<>(config, key, property -> property.getConfig().getString(key, def), def);
     }
+    public static Property<List<String>> property(CustomConfig config, String key, List<String> def) {
+        return new Property<>(config, key, property -> property.getConfig().get().getStringList(key), def);
+    }
     public static Property<Integer> property(CustomConfig config, String key, int def) {
         return new Property<>(config, key, property -> property.getConfig().getInt(key, def), def);
     }
@@ -72,8 +76,5 @@ public class Property<V> {
     }
     public static Property<Boolean> property(CustomConfig config, String key, boolean def) {
         return new Property<>(config, key, property -> property.getConfig().getBoolean(key, def), def);
-    }
-    public static Property<Item> propertyItem(CustomConfig config, String key, String def) {
-        return new Property<>(config, key, property -> property.getConfig().getItem(key), def);
     }
 }

@@ -1,11 +1,16 @@
 package me.sat7.bustamine.manager;
 
-import me.sat7.bustamine.BustaMine;
+import com.google.common.collect.Lists;
 import me.sat7.bustamine.config.Config;
 import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.BetGuiHolder;
+import me.sat7.bustamine.utils.BustaIcon;
+import me.sat7.bustamine.utils.CustomConfig;
+import me.sat7.bustamine.utils.ListPair;
+import me.sat7.bustamine.utils.Property;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,21 +22,82 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static me.sat7.bustamine.config.Messages.*;
+import static me.sat7.bustamine.utils.BustaIcon.def;
+import static me.sat7.bustamine.utils.BustaIcon.propertyIcon;
+import static me.sat7.bustamine.utils.Property.property;
 import static me.sat7.bustamine.utils.Util.*;
 
-public class GuiBetSettings implements Listener {
-    private final BustaMine plugin;
+public class GuiBetSettings extends CustomConfig implements Listener, Property.IPropertyRegistry {
+    private final List<Property<?>> registeredProperties = new ArrayList<>();
     private final GameManager parent;
     private final Config config;
+
+    public final Property<BustaIcon> btnStateEnabled = propertyIcon(this, "icons.state-enabled", def()
+            .material(Material.GREEN_STAINED_GLASS_PANE)
+            .display("&6&l开/关")
+            .lore(
+                    "&f开启: x%auto_cash_out%",
+                    "&e点击进行操作"
+            ));
+    public final Property<BustaIcon> btnStateDisabled = propertyIcon(this, "icons.state-enabled", def()
+            .material(Material.RED_STAINED_GLASS_PANE)
+            .display("&6&l开/关")
+            .lore(
+                    "&f关闭",
+                    "&e点击进行操作"
+            ));
+    public final Property<BustaIcon> btnMinus1000 = propertyIcon(this, "icons.minus-1000", def()
+            .material(Material.GOLD_NUGGET)
+            .display("&6&l-10"));
+    public final Property<BustaIcon> btnMinus100 = propertyIcon(this, "icons.minus-100", def()
+            .material(Material.GOLD_NUGGET)
+            .display("&6&l-1"));
+    public final Property<BustaIcon> btnMinus10 = propertyIcon(this, "icons.minus-10", def()
+            .material(Material.GOLD_NUGGET)
+            .display("&6&l-0.1"));
+    public final Property<BustaIcon> btnPlus10 = propertyIcon(this, "icons.plus-10", def()
+            .material(Material.GOLD_NUGGET)
+            .display("&6&l+0.1"));
+    public final Property<BustaIcon> btnPlus100 = propertyIcon(this, "icons.plus-100", def()
+            .material(Material.GOLD_NUGGET)
+            .display("&6&l+1"));
+    public final Property<BustaIcon> btnPlus1000 = propertyIcon(this, "icons.plus-1000", def()
+            .material(Material.GOLD_NUGGET)
+            .display("&6&l+10"));
+    public final Property<List<String>> btnLoreEnabled = property(this, "btn-lore-enabled", Lists.newArrayList(
+            "&f开启: x%auto_cash_out%",
+            "&e点击进行操作"
+    ));
+    public final Property<List<String>> btnLoreDisabled = property(this, "btn-lore-disabled", Lists.newArrayList(
+            "&f关闭",
+            "&e点击进行操作"
+    ));
+
     private int multiplierMax;
 
     public GuiBetSettings(GameManager parent) {
+        super(parent.plugin());
         this.parent = parent;
-        this.plugin = parent.plugin();
         this.config = parent.plugin().config();
         Bukkit.getPluginManager().registerEvents(this, plugin);
+    }
+
+    @Override
+    public void registerProperty(Property<?> property) {
+        registeredProperties.add(property);
+    }
+
+    public void setup() {
+        setup("gui/bet-settings", config -> {
+            for (Property<?> property : registeredProperties) {
+                property.setup();
+            }
+            config.options().copyDefaults(true);
+        });
+        save();
     }
 
     public void reload() {
@@ -67,59 +133,24 @@ public class GuiBetSettings implements Listener {
             inv.setItem(26, btnExpGame);
         }
 
-        ItemStack state;
-        ArrayList<String> btnLore = new ArrayList<>();
+        ListPair<String, Object> replacements = new ListPair<>();
+        List<String> btnLore;
         User user = plugin.users().get(p);
         if (user.getAutoCashOut() >= 0) {
-            btnLore.add(CO_Enabled.get() + ": " + CO_x.get() + (user.getAutoCashOut() / 100.0));
-            btnLore.add(UI_Click.get());
-
-            state = new ItemStack(getGlass(13));
+            replacements.add("%auto_cash_out%", String.format("%.2f", (user.getAutoCashOut() / 100.0)));
+            btnLore = btnLoreEnabled.val();
+            inv.setItem(13, btnStateEnabled.val().generateItem(replacements, "state"));
         } else {
-            btnLore.add(CO_Disabled.get());
-            btnLore.add(UI_Click.get());
-
-            state = new ItemStack(getGlass(14));
+            btnLore = btnLoreDisabled.val();
+            inv.setItem(13, btnStateDisabled.val().generateItem(replacements, "state"));
         }
-        ItemMeta stateMeta = state.getItemMeta();
-        if (stateMeta != null) {
-            stateMeta.setDisplayName(CO_OnOff.get());
-            stateMeta.setLore(btnLore);
-            state.setItemMeta(stateMeta);
-        }
-        flag(state, "state");
-        inv.setItem(13, state);
 
-        // -10
-        ItemStack btnBigMinus10 = createItemStack(config.btnBetBig, null,
-                CO_Minus10.get(), btnLore, 1);
-        flag(btnBigMinus10, "mod:-1000");
-        inv.setItem(10, btnBigMinus10);
-        // -1
-        ItemStack btnMediumMinus1 = createItemStack(config.btnBetMedium, null,
-                CO_Minus1.get(), btnLore, 1);
-        flag(btnMediumMinus1, "mod:-100");
-        inv.setItem(11, btnMediumMinus1);
-        // -0.1
-        ItemStack BtnSmallMinus01 = createItemStack(config.btnBetSmall, null,
-                CO_Minus01.get(), btnLore, 1);
-        flag(BtnSmallMinus01, "mod:-10");
-        inv.setItem(12, BtnSmallMinus01);
-        // +0.1
-        ItemStack btnSmallPlus01 = createItemStack(config.btnBetSmall, null,
-                CO_Plus01.get(), btnLore, 1);
-        flag(btnSmallPlus01, "mod:+10");
-        inv.setItem(14, btnSmallPlus01);
-        // +1
-        ItemStack btnMediumPlus1 = createItemStack(config.btnBetMedium, null,
-                CO_Plus1.get(), btnLore, 1);
-        flag(btnMediumPlus1, "mod:+100");
-        inv.setItem(15, btnMediumPlus1);
-        // +10
-        ItemStack btnBigPlus10 = createItemStack(config.btnBetBig, null,
-                CO_Plus10.get(), btnLore, 1);
-        flag(btnBigPlus10, "mod:+1000");
-        inv.setItem(16, btnBigPlus10);
+        inv.setItem(10, btnMinus1000.val().generateItem(replacements, btnLore, "mod:-1000"));
+        inv.setItem(11, btnMinus100.val().generateItem(replacements, btnLore, "mod:-100"));
+        inv.setItem(12, btnMinus10.val().generateItem(replacements, btnLore, "mod:-10"));
+        inv.setItem(14, btnPlus10.val().generateItem(replacements, btnLore, "mod:+10"));
+        inv.setItem(15, btnPlus100.val().generateItem(replacements, btnLore, "mod:+100"));
+        inv.setItem(16, btnPlus1000.val().generateItem(replacements, btnLore, "mod:+1000"));
 
         p.openInventory(inv);
     }

@@ -3,14 +3,12 @@ package me.sat7.bustamine.config;
 import com.google.common.collect.Lists;
 import me.sat7.bustamine.BustaMine;
 import me.sat7.bustamine.utils.CustomConfig;
-import me.sat7.bustamine.utils.Item;
 import me.sat7.bustamine.utils.Property;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static me.sat7.bustamine.utils.Property.property;
-import static me.sat7.bustamine.utils.Property.propertyItem;
 
 public class Config extends CustomConfig implements Property.IPropertyRegistry {
     private final List<Property<?>> registeredProperties = new ArrayList<>();
@@ -41,15 +39,6 @@ public class Config extends CustomConfig implements Property.IPropertyRegistry {
     public final Property<String> commandPlayerCashOut = property(this, "Command.WhenPlayerCashOut", "");
     public final Property<String> commandRoundEnd = property(this, "Command.WhenRoundEnd", "");
 
-    public final Property<Item> btnBankroll = propertyItem(this, "BtnIcon.Bankroll", "DIAMOND");
-    public final Property<Item> btnWinChance = propertyItem(this, "BtnIcon.WinChance", "PAPER");
-    public final Property<Item> btnMyState = propertyItem(this, "BtnIcon.MyState", "PAPER");
-    public final Property<Item> btnHistory = propertyItem(this, "BtnIcon.History", "PAPER");
-    public final Property<Item> btnCashOut = propertyItem(this, "BtnIcon.CashOut", "EMERALD");
-    public final Property<Item> btnCashOutSetting = propertyItem(this, "BtnIcon.CashOutSetting", "PAPER");
-    public final Property<Item> btnBetSmall = propertyItem(this, "BtnIcon.BetSmall", "GOLD_NUGGET");
-    public final Property<Item> btnBetMedium = propertyItem(this, "BtnIcon.BetMedium", "GOLD_INGOT");
-    public final Property<Item> btnBetBig = propertyItem(this, "BtnIcon.BetBig", "GOLD_BLOCK");
     public Config(BustaMine plugin) {
         super(plugin);
     }

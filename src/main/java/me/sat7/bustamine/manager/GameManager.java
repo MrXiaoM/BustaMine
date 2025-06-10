@@ -7,6 +7,7 @@ import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaState;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.IBustaMineGui;
+import me.sat7.bustamine.utils.ListPair;
 import me.sat7.bustamine.utils.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -21,11 +22,10 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
+import java.io.File;
 import java.util.*;
 
-import static me.sat7.bustamine.config.Messages.*;
 import static me.sat7.bustamine.utils.Util.*;
 
 public class GameManager implements Listener {
@@ -43,8 +43,8 @@ public class GameManager implements Listener {
      */
     private int curNum;
 
-    private int maxMulti = 150;
-    private double baseInstantBust = 0;
+    protected int maxMulti = 150;
+    protected double baseInstantBust = 0;
 
     private final GuiGameShared guiGameShared;
     private final GuiBetSettings guiBetSettings;
@@ -68,6 +68,16 @@ public class GameManager implements Listener {
 
     public BustaMine plugin() {
         return plugin;
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public void setup() {
+        File folder = plugin.resolve("gui");
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        guiGameShared().setup();
+        guiBetSettings().setup();
     }
 
     public void reload() {
@@ -196,84 +206,7 @@ public class GameManager implements Listener {
         // 设定下注倒计时
         betTimeLeft = config.roundInterval.val() + 1;
 
-        // 显示胜率公示
-        if (config.isShowWinChance.val()) {
-            ItemStack winChance = createItemStack(config.btnWinChance, null,
-                    UI_WinChance.get(), null, 1);
-
-            // TODO: 添加到配置文件
-            double bustChance = odd(maxMulti - 1);
-            ArrayList<String> winChanceArr = new ArrayList<>();
-            winChanceArr.add("§ex2: " + doubleFormat.format((odd(1) - bustChance) * 100 * (1 - baseInstantBust)) + "%");
-            winChanceArr.add("§ex3: " + doubleFormat.format((odd(2) - bustChance) * 100 * (1 - baseInstantBust)) + "%");
-            winChanceArr.add("§ex7: " + doubleFormat.format((odd(6) - bustChance) * 100 * (1 - baseInstantBust)) + "%");
-            winChanceArr.add("§ex12: " + doubleFormat.format((odd(11) - bustChance) * 100 * (1 - baseInstantBust)) + "%");
-            winChanceArr.add("§eInstaBust: " + doubleFormat.format((bustChance + baseInstantBust) * 100) + "%");
-            winChanceArr.add("§e" + MaximumMultiplier.get() + ": x" + maxMulti);
-
-            ItemMeta meta = winChance.getItemMeta();
-            if (meta != null) {
-                meta.setLore(winChanceArr);
-                winChance.setItemMeta(meta);
-            }
-            flag(winChance, "win chance");
-            guiGameShared().setBothIcon(46, winChance);
-        } else {
-            guiGameShared().setBothIcon(46, null);
-        }
-
-        // 显示资金
-        if (config.isShowBankroll.val()) {
-            if (guiGameShared().getMoneyIcon(45) == null) {
-                ItemStack bankrollBtn = createItemStack(config.btnBankroll, null,
-                        UI_Bankroll.get(), null, 1);
-                flag(bankrollBtn, "bankroll");
-                guiGameShared().setBothIcon(45, bankrollBtn);
-            }
-            updateBankroll(BustaType.MONEY, 0);
-            updateBankroll(BustaType.EXP, 0);
-        } else {
-            guiGameShared().setBothIcon(45, null);
-        }
-
-        // 添加下注按钮
-        ItemStack bet10Btn = createItemStack(config.btnBetSmall, null,
-                UI_BetBtn.get() + " §e" + config.currencySymbol + config.betSmall, null, 1);
-        flag(bet10Btn, "bet:small");
-        guiGameShared().setMoneyIcon(51, bet10Btn);
-        ItemStack betE1Btn = createItemStack(config.btnBetSmall, null,
-                UI_BetBtn.get() + " §eXp" + config.betExpSmall, null, 1);
-        flag(betE1Btn, "bet:small");
-        guiGameShared().setExpIcon(51, betE1Btn);
-
-        // 100
-        ItemStack bet100Btn = createItemStack(config.btnBetMedium, null,
-                UI_BetBtn.get() + " §e" + config.currencySymbol + config.betMedium, null, 1);
-        flag(bet100Btn, "bet:medium");
-        guiGameShared().setMoneyIcon(52, bet100Btn);
-        ItemStack betE2Btn = createItemStack(config.btnBetMedium, null,
-                UI_BetBtn.get() + " §eXp" + config.betExpMedium, null, 1);
-        flag(betE2Btn, "bet:medium");
-        guiGameShared().setExpIcon(52, betE2Btn);
-
-        // 1000
-        ItemStack bet1000Btn = createItemStack(config.btnBetBig, null,
-                UI_BetBtn.get() + " §e" + config.currencySymbol + config.betBig, null, 1);
-        flag(bet100Btn, "bet:big");
-        guiGameShared().setMoneyIcon(53, bet1000Btn);
-        ItemStack betE3Btn = createItemStack(config.btnBetBig, null,
-                UI_BetBtn.get() + " §eXp" + config.betExpBig, null, 1);
-        flag(betE3Btn, "bet:big");
-        guiGameShared().setExpIcon(53, betE3Btn);
-
-        // 更新抛售图标为下注
-        ItemMeta im = guiGameShared().getMoneyIcon(49).getItemMeta();
-        if (im != null) {
-            ArrayList<String> betLore = new ArrayList<>();
-            betLore.add("§b§l" + "Bet >>>");
-            im.setLore(betLore);
-            guiGameShared().updateBothIcon(49, im);
-        }
+        guiGameShared().updateStartGameUI();
 
         // 开启定时器，进行倒计时
         bustaTask = plugin.getScheduler().runTimer(() -> {
@@ -370,13 +303,11 @@ public class GameManager implements Listener {
 
         // 显示新的资金数据到 lore
         if (config.isShowBankroll.val()) {
-            List<String> lore = new ArrayList<>();
-            double bankMoney = plugin.bank().getDouble("Bankroll.Money");
-            int bankExp = plugin.bank().getInt("Bankroll.Exp");
-            lore.add("§e" + config.currencySymbol + String.format("%.1f", bankMoney / 1000.0) + "K");
-            lore.add("§eXp" + String.format("%.1f", bankExp / 1000.0) + "K");
-
-            guiGameShared().updateBothIcon(45, lore);
+            ListPair<String, Object> replacements = new ListPair<>();
+            replacements.add("%bank_money%", plugin.bank().getDouble("Bankroll.Money"));
+            replacements.add("%bank_exp%", plugin.bank().getInt("Bankroll.Exp"));
+            ItemStack item = guiGameShared().btnBankroll.val().generateItem(replacements, "bankroll");
+            guiGameShared().setBothIcon(45, item);
         }
 
         // 更新统计数据
