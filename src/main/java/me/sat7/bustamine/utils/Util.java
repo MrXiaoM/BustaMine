@@ -23,6 +23,7 @@ public class Util {
             // 计算函数 1 / (i^1.01) 的在 整数定义域，且在 1-150 之间的值
             oddList[i - 1] = 1 / Math.pow(i, 1.01);
         }
+        PAPI.init();
     }
 
     public static double odd(int index) {
@@ -196,6 +197,15 @@ public class Util {
             return material;
         }
         return def;
+    }
+
+    public static boolean isPresent(String className) {
+        try {
+            Class.forName(className);
+            return true;
+        } catch (ClassNotFoundException ignored) {
+            return false;
+        }
     }
 
     private static final String FLAG = "BustaMine_Icon";

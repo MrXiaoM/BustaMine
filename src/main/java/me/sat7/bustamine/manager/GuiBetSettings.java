@@ -5,10 +5,7 @@ import me.sat7.bustamine.config.Config;
 import me.sat7.bustamine.data.User;
 import me.sat7.bustamine.manager.enums.BustaType;
 import me.sat7.bustamine.manager.gui.BetGuiHolder;
-import me.sat7.bustamine.utils.BustaIcon;
-import me.sat7.bustamine.utils.CustomConfig;
-import me.sat7.bustamine.utils.ListPair;
-import me.sat7.bustamine.utils.Property;
+import me.sat7.bustamine.utils.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -127,7 +124,7 @@ public class GuiBetSettings extends CustomConfig implements Listener, Property.I
     }
 
     public void showBetSettingUI(Player p) {
-        Inventory inv = new BetGuiHolder(inventorySize.val(), color(title.val())).getInventory();
+        Inventory inv = new BetGuiHolder(inventorySize.val(), color(PAPI.setPlaceholders(p, title.val()))).getInventory();
 
         btnBackMoneyGame.val().set(inv, null, "back:money");
         btnBackExpGame.val().set(inv, null, "back:exp");

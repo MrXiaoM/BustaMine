@@ -11,6 +11,7 @@ val shadowGroup = "me.sat7.bustamine.libs"
 repositories {
     mavenCentral()
     maven("https://repo.codemc.io/repository/maven-public/")
+    maven("https://repo.helpch.at/releases/")
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven("https://jitpack.io/")
 }
@@ -19,6 +20,7 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.5-R0.1-SNAPSHOT")
 
     compileOnly("net.milkbowl.vault:VaultAPI:1.7")
+    compileOnly("me.clip:placeholderapi:2.11.6")
 
     implementation("de.tr7zw:item-nbt-api:2.15.0")
     implementation("com.github.technicallycoded:FoliaLib:0.4.4")

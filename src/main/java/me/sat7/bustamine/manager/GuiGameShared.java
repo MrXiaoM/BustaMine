@@ -249,7 +249,7 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
         } else {
             title = titleExp.val();
         }
-        Inventory inv = new BustaGuiHolder(type, inventorySize.val(), color(title)).getInventory();
+        Inventory inv = new BustaGuiHolder(type, inventorySize.val(), color(PAPI.setPlaceholders(title))).getInventory();
 
         btnMyState.val().set(inv, null, "my state");
         btnHistory.val().set(inv, null, "history");
