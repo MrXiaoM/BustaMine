@@ -148,7 +148,7 @@ public class UserManager implements Listener {
         Message_DivLower.t(p);
     }
 
-    public void top(@NotNull CommandSender p, String type) {
+    public void checkSortMapUpdate(String type) {
         if (sortedTime.get(type) + (1000L * 60) < System.currentTimeMillis()) {
             sortedMap.get(type).clear();
             for (User user : users()) {
@@ -173,6 +173,10 @@ public class UserManager implements Listener {
             sortedMap.put(type, sortByValue(sortedMap.get(type)));
             sortedTime.put(type, System.currentTimeMillis());
         }
+    }
+
+    public void top(@NotNull CommandSender p, String type) {
+        checkSortMapUpdate(type);
 
         p.sendMessage("§6§l[§e " + Leaderboard.get() + "/" + type + " §6§l]");
 
@@ -200,5 +204,9 @@ public class UserManager implements Listener {
         long seconds = (System.currentTimeMillis() - sortedTime.get(type)) / 1000;
         p.sendMessage("  §7" + Message_LastUpdate.get().replace("{sec}", String.valueOf(seconds)));
         p.sendMessage("");
+    }
+
+    public Map<String, Double> getSort(String type) {
+        return sortedMap.get(type);
     }
 }

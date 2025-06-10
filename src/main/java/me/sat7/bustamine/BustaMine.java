@@ -10,6 +10,7 @@ import me.sat7.bustamine.config.Sounds;
 import me.sat7.bustamine.manager.GameManager;
 import me.sat7.bustamine.manager.UserManager;
 import me.sat7.bustamine.utils.CustomConfig;
+import me.sat7.bustamine.utils.PAPI;
 import me.sat7.bustamine.utils.Util;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -152,6 +153,10 @@ public final class BustaMine extends JavaPlugin {
         reloadMessages();
         reloadConfig();
         reloadGUI();
+
+        if (PAPI.isEnabled()) {
+            new Placeholders(this).register();
+        }
 
         log("Enabled! :)");
 

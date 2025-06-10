@@ -19,8 +19,6 @@ public enum Messages {
     Message_PlayerNotExist("§f玩家不存在."),
     Message_LastUpdate("最后更新: {sec} 秒前"),
 
-    UI_PlayerInfo("§f赌注: {amount}"),
-
     Help_BmGo("/bm go   §e开始游戏 (自动循环开盘)"),
     Help_BmStop("/bm stop   §e停止一盘游戏."),
     Help_BmStatistics("/bm statistics   §e展示统计信息."),
