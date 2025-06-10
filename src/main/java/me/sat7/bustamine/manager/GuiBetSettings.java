@@ -37,7 +37,7 @@ public class GuiBetSettings extends CustomConfig implements Listener, Property.I
             .material(Material.BLUE_STAINED_GLASS_PANE)
             .display("&6&l返回金钱交易")
             .lore());
-    public final Property<BustaIcon> btnBackExpGame = propertyIcon(this, "icons.back-money-game", def()
+    public final Property<BustaIcon> btnBackExpGame = propertyIcon(this, "icons.back-exp-game", def()
             .slot(26)
             .material(Material.BLUE_STAINED_GLASS_PANE)
             .display("&6&l返回经验交易")
