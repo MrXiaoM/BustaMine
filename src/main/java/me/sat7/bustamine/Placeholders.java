@@ -71,7 +71,8 @@ public class Placeholders extends PlaceholderExpansion {
             return String.valueOf(expIn + expOut);
         }
         if (params.startsWith("top_")) {
-            String[] split = params.substring(4).split(":", 3);
+            String substring = params.substring(4);
+            String[] split = substring.split(substring.contains(";") ? ";" : ":", 3);
             Integer top = split.length == 3 ? Util.parseInt(split[1]).orElse(null) : null;
             if (top != null) {
                 String type = split[0];
