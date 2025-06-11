@@ -652,6 +652,10 @@ public class GuiGameShared extends CustomConfig implements Listener, Property.IP
                             SkullMeta skullMeta = (SkullMeta) itemMeta;
                             skullMeta.setOwningPlayer(p);
                             skull.setItemMeta(skullMeta);
+                            Integer id = headPos.get(playerId);
+                            if (id != null && bustaState == BustaState.BET) {
+                                setBothIcon(id, skull);
+                            }
                         } catch (Exception e) {
                             log("Failed to load skull skin of player: " + p.getName());
                         }
