@@ -44,6 +44,13 @@ public enum Messages {
     BettingLimit("§f超过了下注限制"),
     PlayerCountLimit("§f已到达游戏人数上限"),
 
+    Bust_Infinite("§7无限开启"),
+    Bust_Restore("§7无限关闭"),
+    Bust_Insta("§7立即归零"),
+    Bust_Set("§7将在 x%num% 归零"),
+
+    NotNumber("§f应当输入一个数字"),
+
     ;
     private static String prefix = "";
     private final boolean needPrefix;

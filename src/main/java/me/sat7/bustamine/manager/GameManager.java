@@ -34,6 +34,7 @@ public class GameManager implements Listener {
     private boolean gameEnable;
     private int betTimeLeft;
 
+    private boolean infinite;
     /**
      * 归零计数，除以 <code>100.0</code> 即为玩家最高可得倍率，当 <code>curNum > bustNum</code> 时，进行归零操作
      */
@@ -163,6 +164,28 @@ public class GameManager implements Listener {
         return curNum();
     }
 
+    public boolean infinite() {
+        return infinite;
+    }
+
+    public void infinite(boolean infinite) {
+        this.infinite = infinite;
+    }
+
+    /**
+     * @see GameManager#bustNum
+     */
+    public int bustNum() {
+        return bustNum;
+    }
+
+    /**
+     * @see GameManager#bustNum
+     */
+    public void bustNum(int bustNum) {
+        this.bustNum = bustNum;
+    }
+
     /**
      * @see GameManager#curNum
      */
@@ -196,6 +219,8 @@ public class GameManager implements Listener {
 
         // 清空数据，将游戏状态设为 BET
         guiGameShared().reset();
+        infinite(false);
+
         // 将 1-5 行填满玻璃板
         for (int i = 0; i < 45; i++) {
             guiGameShared().setBothIcon(i, getGlassItem(9));
@@ -258,10 +283,10 @@ public class GameManager implements Listener {
 
         // 开启定时器
         bustaTask = plugin.getScheduler().runTimer(() -> {
-            // 归零数量 == 100 时，立即归零
+            // 归零阈值 == 100 时，立即归零
             boolean instantBust = (bustNum == 100);
 
-            if (gameLoop() > bustNum) { // 如果 当前数量 大于 归零数量，则执行归零操作
+            if (gameLoop() > bustNum && !infinite()) { // 如果 当前倍率 大于 归零阈值，则执行归零操作
                 bustaTask.cancel();
 
                 guiGameShared().bust(instantBust);

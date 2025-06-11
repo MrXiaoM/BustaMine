@@ -3,6 +3,7 @@ package me.sat7.bustamine.commands;
 import me.sat7.bustamine.BustaMine;
 import me.sat7.bustamine.utils.CustomConfig;
 import me.sat7.bustamine.manager.enums.BustaType;
+import me.sat7.bustamine.utils.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static me.sat7.bustamine.config.Messages.*;
+import static me.sat7.bustamine.utils.Util.doubleFormat;
 
 public class CommandMain implements CommandExecutor, TabCompleter {
     private final BustaMine plugin;
@@ -176,6 +178,36 @@ public class CommandMain implements CommandExecutor, TabCompleter {
 
                     plugin.users().showStatistics(sender);
                     break;
+                case "bust":
+                    if (!sender.hasPermission("bm.admin") || args.length < 2) {
+                        return true;
+                    }
+
+                    if ("infinite".equals(args[1])) {
+                        Bust_Infinite.t(sender);
+                        plugin.game().infinite(true);
+                        return true;
+                    }
+                    if ("restore".equals(args[1])) {
+                        Bust_Restore.t(sender);
+                        plugin.game().infinite(false);
+                        return true;
+                    }
+                    if ("set".equals(args[1]) && args.length > 2) {
+                        Integer bust = Util.parseInt(args[2]).orElse(null);
+                        if (bust == null) {
+                            return NotNumber.t(sender);
+                        }
+                        String formatted = doubleFormat.format(bust / 100.0);
+                        sender.sendMessage(prefix() + Bust_Set.get().replace("%num%", formatted));
+                        plugin.game().bustNum(bust);
+                        return true;
+                    }
+                    if ("insta".equals(args[1])) {
+                        Bust_Insta.t(sender);
+                        plugin.game().bustNum(plugin.game().curNum());
+                        return true;
+                    }
             }
         }
 
@@ -197,16 +229,22 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                 temp.add("reloadConfig");
                 temp.add("reloadLang");
                 temp.add("test");
+                temp.add("bust");
             }
-            if (sender.hasPermission("bm.user.money") || sender.hasPermission("bm.user.exp")) {
-                if (sender instanceof Player) {
+            if (sender instanceof Player) {
+                if (sender.hasPermission("bm.user.money")) {
                     temp.add("money");
+                }
+                if (sender.hasPermission("bm.user.exp")) {
                     temp.add("exp");
                 }
+            }
+            if (sender.hasPermission("bm.user.stats")) {
                 temp.add("stats");
+            }
+            if (sender.hasPermission("bm.user.top")) {
                 temp.add("top");
             }
-
             for (String s : temp) {
                 if (s.startsWith(args[0])) list.add(s);
             }
@@ -219,6 +257,12 @@ public class CommandMain implements CommandExecutor, TabCompleter {
                 temp.add("NetProfit");
                 temp.add("NetProfit_Exp");
                 temp.add("GamesPlayed");
+            }
+            if (args[0].equals("bust") && sender.hasPermission("bm.admin")) {
+                temp.add("infinite");
+                temp.add("restore");
+                temp.add("set");
+                temp.add("insta");
             }
             for (String s : temp) {
                 if (s.startsWith(args[1])) list.add(s);
